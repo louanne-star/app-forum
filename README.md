@@ -40,6 +40,10 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
   - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer.
   - **Avant le forum : faire une planche test sur papier normal** pour vérifier dans quel sens remettre la feuille dans l'imprimante (regarder la feuille à la lumière : recto et verso doivent se superposer).
   - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
+- **Tablettes du stand** : `<adresse>/#/tablette` (même code équipe, la tablette s'en souvient). On choisit le jeu, il s'ouvre en plein écran. Les visiteurs ne voient jamais les jeux sur leur téléphone.
+  - Fin de partie : l'équipe montre au visiteur le **QR imprimé** de l'activité (page `#/equipe/qr`, un par activité, papier comme numérique). Il le scanne avec « Scanner » de son appli → activité validée.
+  - **« Visiteur suivant »** (deux appuis) relance le jeu à zéro. L'Évasion repart aussi avec 0 fin découverte. Le bouton ☰ permet de changer de jeu.
+  - Chaque jeu numérique vit dans `jeux/<id>/index.html` (chemin `jeu` dans config.js).
 - **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`Carte matricule/7.png`) ne change pas : à imprimer à l'avance.
   - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).
 - **Visiteur qui change de téléphone** : lien « J'ai déjà un dossier » (matricule + nom).

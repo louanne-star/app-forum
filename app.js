@@ -6,7 +6,8 @@
      #/activite/<id>    validation d'une activité (cible des QR codes)
      #/fin              parcours terminé : niveau + sortie
      #/retrouver        retrouver son dossier (autre téléphone / navigateur)
-     #/equipe[/impression|qr]   espace équipe (code d'accès)              */
+     #/equipe[/impression|qr]   espace équipe (code d'accès)
+     #/tablette[/<id>]  jeux numériques sur les tablettes du stand (code d'accès) */
 (() => {
   'use strict';
 
@@ -28,7 +29,7 @@
     get(k, s = localStorage) { try { return s.getItem(k); } catch { return null; } },
     set(k, v, s = localStorage) { try { v == null ? s.removeItem(k) : s.setItem(k, v); } catch { /* stockage indisponible */ } },
   };
-  const K_MOI = 'forcats.moi', K_ATTENTE = 'forcats.attente', K_EQUIPE = 'forcats.equipe';
+  const K_MOI = 'forcats.moi', K_ATTENTE = 'forcats.attente', K_EQUIPE = 'forcats.equipe', K_TABLETTE = 'forcats.tablette';
 
   let toastTimer;
   function toast(msg) {
@@ -482,7 +483,7 @@
       <section class="dossier">
         <div class="dossier-tete"><span class="label">${pluriel(total, 'activité')}</span><span class="registre muted">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
         <ul class="activites">
-          ${C.activites.map(a => `<li><div class="stack-sm" style="gap:2px;min-width:0"><span class="nom">${esc(a.nom)}</span><span class="muted small">${esc(a.description)}</span></div>
+          ${C.activites.map(a => `<li><div class="stack-sm" style="gap:2px;min-width:0"><span class="nom">${esc(a.nom)}</span><span class="muted small">${a.format ? `<b>${esc(a.format)}</b> · ` : ''}${esc(a.description)}</span></div>
             ${faites.has(a.id) ? '<span class="pastille ok">Validé</span>' : '<span class="pastille">À découvrir</span>'}</li>`).join('')}
         </ul>
       </section>
@@ -821,14 +822,16 @@
     nettoyage = () => { stop(); clearInterval(filet); };
   }
 
+  const baseQR = () => (C.baseUrl || (location.origin + location.pathname)).replace(/#.*$/, '');
+  const lien = route => baseQR() + '#/' + route;
+  const qr = texte => {
+    if (!window.qrcode) return '<p class="muted small">Générateur de QR indisponible (hors ligne ?).</p>';
+    const q = window.qrcode(0, 'M'); q.addData(texte); q.make();
+    return q.createSvgTag(6, 2);
+  };
+
   function posteQR(zone) {
-    const base = (C.baseUrl || (location.origin + location.pathname)).replace(/#.*$/, '');
-    const lien = route => base + '#/' + route;
-    const qr = texte => {
-      if (!window.qrcode) return '<p class="muted small">Générateur de QR indisponible (hors ligne ?).</p>';
-      const q = window.qrcode(0, 'M'); q.addData(texte); q.make();
-      return q.createSvgTag(6, 2);
-    };
+    const base = baseQR();
     const carte = (titre, sous, route, desc = '') => `<article class="qr-carte">${qr(lien(route))}<h3>${esc(titre)}</h3>${desc ? `<p class="small">${esc(desc)}</p>` : ''}<p class="small"><b>${esc(sous)}</b></p><p class="registre">${esc(lien(route))}</p></article>`;
     zone.innerHTML = `
       <div class="stack">
@@ -837,9 +840,79 @@
         <p class="muted small no-print">Imprime cette page (Ctrl/Cmd + P) depuis le site déployé : un QR pour l'entrée (à scanner avec l'appareil photo), un par activité (à scanner avec le bouton « Scanner » de l'appli).</p>
         <div class="grille">
           ${carte('Entrée', "Scanne avec l'appareil photo de ton téléphone pour t'inscrire", '')}
-          ${C.activites.map(a => carte(a.nom, "Scanne avec le bouton « Scanner » de l'appli", 'activite/' + a.id, a.description)).join('')}
+          ${C.activites.map(a => carte(a.nom, "Activité finie ? Scanne avec le bouton « Scanner » de l'appli pour la valider", 'activite/' + a.id, (a.format ? a.format + ' · ' : '') + a.description)).join('')}
         </div>
       </div>`;
+  }
+
+  /* ================= Tablettes du stand ================= */
+  /* Les jeux numériques tournent sur les tablettes de l'équipe, jamais sur le téléphone
+     du visiteur. Partie finie : l'équipe montre le QR imprimé de l'activité (#/equipe/qr),
+     le visiteur le scanne avec le bouton « Scanner » de son appli pour la valider. */
+  const jeuxNumeriques = () => C.activites.filter(a => a.jeu);
+
+  function ecranTablette(id) {
+    if (store.get(K_TABLETTE) !== '1') {
+      cadre(`
+        <form class="dossier" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
+          <h1>Tablette du stand</h1>
+          <p class="muted small">Réservé à l'équipe : à déverrouiller une fois, la tablette s'en souvient.</p>
+          <div class="champ"><label for="code">Code d'accès</label><input type="password" id="code" inputmode="numeric" autocomplete="off"></div>
+          <p class="erreur" id="err" hidden>Code incorrect.</p>
+          <button class="btn btn-or" type="submit">Entrer</button>
+        </form>`, { equipe: true });
+      document.getElementById('f').addEventListener('submit', e => {
+        e.preventDefault();
+        if (document.getElementById('code').value === String(C.codeEquipe)) { store.set(K_TABLETTE, '1'); ecranTablette(id); }
+        else document.getElementById('err').hidden = false;
+      });
+      return;
+    }
+    const a = activite(id);
+    if (!a || !a.jeu) {
+      cadre(`
+        <div class="stack">
+          <h1>Quel jeu sur cette tablette ?</h1>
+          <p class="muted small">Touche un jeu : il s'ouvre en plein écran et revient au début pour chaque visiteur.</p>
+          <div class="grille">
+            ${jeuxNumeriques().map(j => `<a class="choix-jeu" href="#/tablette/${esc(j.id)}"><span class="nom">${esc(j.nom)}</span><span class="muted small">${esc(j.description)}</span></a>`).join('')}
+          </div>
+        </div>`, { equipe: true });
+      return;
+    }
+    jouer(a);
+  }
+
+  async function jouer(a) {
+    document.body.classList.add('equipe');
+    document.title = a.nom + ' — ' + TITRE;
+    let installe = true;
+    try { installe = (await fetch(a.jeu, { method: 'HEAD', cache: 'no-store' })).ok; } catch { /* file:// : on tente quand même */ }
+    app.innerHTML = `
+      <div class="tablette">
+        ${installe
+          ? `<iframe class="tablette-jeu" src="${esc(a.jeu)}" title="${esc(a.nom)}" allow="autoplay; fullscreen"></iframe>`
+          : `<div class="tablette-vide dossier"><h1>${esc(a.nom)}</h1><p class="muted">Jeu pas encore installé : mets ses fichiers dans <span class="registre">${esc(a.jeu)}</span>.</p></div>`}
+        <div class="tablette-outils">
+          <a class="btn btn-ligne" href="#/tablette/menu" aria-label="Changer de jeu">☰</a>
+          <button class="btn btn-or" id="suivant">Visiteur suivant</button>
+        </div>
+      </div>`;
+    /* Relance le jeu à zéro. Deux appuis, pour qu'un visiteur ne coupe pas sa partie par erreur. */
+    const bouton = document.getElementById('suivant');
+    let delai;
+    bouton.onclick = () => {
+      clearTimeout(delai);
+      if (!bouton.dataset.confirmer) {
+        bouton.dataset.confirmer = '1'; bouton.textContent = 'Confirmer ?';
+        delai = setTimeout(() => { delete bouton.dataset.confirmer; bouton.textContent = 'Visiteur suivant'; }, 3000);
+        return;
+      }
+      delete bouton.dataset.confirmer; bouton.textContent = 'Visiteur suivant';
+      const f = app.querySelector('iframe');
+      if (f) f.src = a.jeu;
+    };
+    nettoyage = () => clearTimeout(delai);
   }
 
   /* ================= Routeur ================= */
@@ -848,6 +921,7 @@
     const h = location.hash.replace(/^#\/?/, '');
     const [page, arg] = h.split('/');
     try {
+      if (page === 'tablette') return ecranTablette(arg);
       if (page !== 'equipe') chargement();
       if (page === 'activite') return await ecranActivite(arg);
       if (page === 'parcours') return await ecranParcours();

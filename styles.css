@@ -277,6 +277,14 @@ body.avec-action .page { padding-bottom: 120px; }
 .qr-carte h3 { color: #241811; font-size: 20px; }
 .qr-carte .registre { color: #6f5a3f; font-size: 12px; overflow-wrap: anywhere; }
 
+/* Tablettes du stand (#/tablette) */
+.choix-jeu { display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid var(--line-dossier); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink); text-decoration: none; box-shadow: var(--shadow-sm); }
+.choix-jeu .nom { font: 800 20px/26px var(--display); }
+.tablette { position: fixed; inset: 0; background: var(--wood); }
+.tablette-jeu { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+.tablette-vide { position: absolute; inset: 16px; justify-content: center; align-items: center; text-align: center; }
+.tablette-outils { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; opacity: .85; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

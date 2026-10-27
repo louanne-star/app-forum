@@ -1,0 +1,447 @@
+/* ==========================================================
+   Le Pendu du Bagne — feuille de style
+   Mise en page : décor plein écran + interface en surimpression.
+   Toutes les tailles sont relatives à l'écran (--h = 1 % de la
+   hauteur, --w = 1 % de la largeur, calculés en JS) pour
+   s'adapter à toutes les tablettes en paysage et à l'ordinateur.
+   ========================================================== */
+:root {
+  --encre-marine: #16263d;   /* bleu nuit des plaques            */
+  --creme:        #f1e3bf;   /* lettres sur fond bleu            */
+  --or:           #c99b4b;   /* filets dorés                     */
+  --encre-brune:  #3a2614;   /* texte sur parchemin              */
+  --rouge-sang:   #9e2a1c;   /* graduation atteinte              */
+  --bois-sombre:  #24160d;   /* fond de secours derrière le décor */
+
+  --f-titre: "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;
+  --f-texte: "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+
+  --h: 1vh;  /* remplacés par le JS (hauteur réelle de l'écran) */
+  --w: 1vw;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bois-sombre);
+  color: var(--encre-brune);
+  font-family: var(--f-texte);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+img { -webkit-user-drag: none; user-select: none; pointer-events: none; display: block; max-width: none; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:focus-visible { outline: 3px solid var(--or); outline-offset: 3px; border-radius: 8px; }
+
+/* ---------- Décor : « cover », la ligne de l'estrade (67,7 %) reste fixe ---------- */
+.decor {
+  position: fixed;
+  inset: 0;
+  background: var(--bois-sombre) url("../assets/decor.webp") 50% 67.7% / cover no-repeat;
+}
+
+.jeu { position: fixed; inset: 0; }
+
+/* ---------- En-tête ---------- */
+.entete {
+  position: absolute;
+  top: calc(var(--h) * 2.5);
+  left: max(calc(var(--w) * 2.5), env(safe-area-inset-left, 0px));
+  width: min(calc(var(--w) * 36), calc(var(--h) * 48));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--h) * 1.2);
+}
+.titre { margin: 0; width: 100%; filter: drop-shadow(0 calc(var(--h)*.6) calc(var(--h)*1) rgba(0,0,0,.45)); }
+.titre img { width: 100%; height: auto; }
+
+.sous-titre {
+  container-type: inline-size;
+  margin: 0;
+  width: 82%;
+  aspect-ratio: 900 / 201;
+  display: grid;
+  place-items: center;
+  padding: 0 11%;
+  background: url("../assets/bandeau-parchemin.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--h)*.4) calc(var(--h)*.8) rgba(0,0,0,.35));
+  text-align: center;
+  color: var(--encre-brune);
+}
+.sous-titre span {
+  font-size: 7.6cqw;
+  line-height: 1.15;
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+/* ---------- Compteur ---------- */
+.compteur {
+  container-type: inline-size;
+  position: absolute;
+  top: calc(var(--h) * 3);
+  right: max(calc(var(--w) * 2.5), env(safe-area-inset-right, 0px));
+  width: min(calc(var(--w) * 22), calc(var(--h) * 30));
+  aspect-ratio: 800 / 166;
+  display: grid;
+  place-items: center;
+  background: url("../assets/cartouche.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--h)*.4) calc(var(--h)*.8) rgba(0,0,0,.4));
+  color: var(--creme);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+.compteur > span { font-size: 8.6cqw; font-weight: 500; }
+.compteur b { font-weight: 600; }
+
+/* ---------- Guillotine ----------
+   Image de 1003 × 1394 px. Les pourcentages ci-dessous viennent
+   des mesures faites sur cette image (rainure, traverse, lunette). */
+.guillotine {
+  position: absolute;
+  height: calc(var(--h) * 62);
+  aspect-ratio: 1003 / 1394;
+  bottom: calc(var(--h) * 32.3);
+  /* centre de l'estrade = 63 % de la largeur du décor */
+  left: calc(var(--w) * 50 + 0.13 * max(var(--w) * 100, var(--h) * 133.33));
+  transform: translateX(-50%);
+  filter: drop-shadow(calc(var(--h)*-.8) calc(var(--h)*.8) calc(var(--h)*1.2) rgba(30,15,5,.45));
+}
+.guillotine.secousse { animation: secousse .45s ease-out; }
+
+.structure { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+
+/* Zone où la lame coulisse : masque la corde au-dessus de la traverse
+   et la lame sous la lunette */
+.glissiere {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  clip-path: inset(2.58% 28.41% 40.17% 32.9%);
+}
+
+/* La lame : un cran = 8,914 % de sa propre hauteur */
+.lame {
+  position: absolute;
+  left: 41.91%;
+  top: 10.26%;
+  width: 22.68%;
+  aspect-ratio: 737 / 1348;
+  transform: translateY(calc(var(--e) * 8.914%));
+  transition: transform .55s cubic-bezier(.55, 0, .7, 1.35);
+}
+.lame img { width: 100%; height: 100%; }
+.guillotine.remonte .lame { transition: transform .9s cubic-bezier(.3, .1, .3, 1); }
+.guillotine.chute .lame   { transition: transform .22s cubic-bezier(.7, 0, 1, 1); }
+
+.corde {
+  position: absolute;
+  left: 50.5%;
+  bottom: 98%;
+  width: 6.6%;
+  height: 300%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(-35deg, #8a6436 0 3px, #b58a52 3px 6px, #6e4c26 6px 8px);
+}
+
+/* Graduation : 7 crans sur le montant droit */
+.graduation {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.graduation li {
+  position: absolute;
+  left: 64.6%;
+  width: 6.2%;
+  height: 0.55%;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: #1c0f07;
+  box-shadow: 0 1px 0 rgba(222, 180, 120, .35);
+  transition: background .3s, box-shadow .3s;
+}
+.graduation li:nth-child(odd) { width: 8.2%; } /* crans alternés, comme une règle */
+.graduation li.atteint {
+  background: var(--rouge-sang);
+  box-shadow: 0 0 6px rgba(214, 72, 40, .85), 0 1px 0 rgba(255, 200, 150, .4);
+}
+
+@keyframes secousse {
+  0%, 100% { transform: translateX(-50%); }
+  20% { transform: translateX(calc(-50% - 6px)) rotate(-.6deg); }
+  45% { transform: translateX(calc(-50% + 5px)) rotate(.5deg); }
+  70% { transform: translateX(calc(-50% - 3px)); }
+}
+
+/* ---------- Bas d'écran : mot + clavier ---------- */
+.bas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(calc(var(--h) * 3), env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--h) * 3.2);
+  pointer-events: none;
+  z-index: 5;
+}
+.bas > * { pointer-events: auto; }
+
+.panneau-mot {
+  container-type: inline-size;
+  width: min(calc(var(--w) * 56), calc(var(--h) * 78));
+  aspect-ratio: 1300 / 260;
+  display: grid;
+  place-items: center;
+  background: url("../assets/panneau-mot.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--h)*.8) calc(var(--h)*1.4) rgba(0,0,0,.5));
+}
+
+/* --n = nombre de lettres du mot (réglé en JS) */
+.mot {
+  --case: min(calc((82cqw - (var(--n) - 1) * 1.4cqw) / var(--n)), 8.5cqw);
+  display: flex;
+  gap: 1.4cqw;
+  padding-bottom: 1.2cqw;
+}
+.case {
+  width: var(--case);
+  height: calc(var(--case) * 1.25);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: max(2px, calc(var(--case) * .07)) solid var(--creme);
+  font-family: var(--f-titre);
+  font-weight: 700;
+  font-size: calc(var(--case) * .92);
+  line-height: 1;
+  color: var(--creme);
+  text-shadow: 0 2px 4px rgba(0,0,0,.5);
+}
+.case span { display: block; padding-bottom: .08em; }
+.case.revelee span { animation: apparition .35s ease-out; }
+.case.manquee { color: #e08a6f; } /* lettres révélées après une défaite */
+
+@keyframes apparition {
+  from { transform: translateY(-30%) scale(1.3); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* Clavier : 2 rangées de 13 tuiles */
+.clavier {
+  --tuile: min(calc(var(--h) * 6.9), calc(var(--w) * 5.5));
+  display: grid;
+  grid-template-columns: repeat(13, var(--tuile));
+  gap: calc(var(--tuile) * .14) calc(var(--tuile) * .16);
+}
+.touche {
+  width: var(--tuile);
+  height: calc(var(--tuile) * 1.055);
+  background: url("../assets/tuile.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.45));
+  font-family: var(--f-titre);
+  font-weight: 700;
+  font-size: calc(var(--tuile) * .5);
+  line-height: 1;
+  color: var(--encre-marine);
+  display: grid;
+  place-items: center;
+  padding-top: 4%;
+  transition: transform .08s, filter .25s, opacity .25s;
+}
+.touche:active:not(:disabled) { transform: translateY(2px) scale(.93); filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.touche:disabled {
+  cursor: default;
+  opacity: .55;
+  filter: grayscale(1) brightness(.62) drop-shadow(0 1px 1px rgba(0,0,0,.3));
+}
+.touche.erreur-anim { animation: refus .3s; }
+@keyframes refus {
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* ---------- Boutons ronds (indice / paramètres) ---------- */
+.boutons {
+  position: absolute;
+  right: max(calc(var(--w) * 2), env(safe-area-inset-right, 0px));
+  bottom: max(calc(var(--h) * 3), env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--h) * 1.8);
+  z-index: 6;
+}
+.btn-rond {
+  position: relative;
+  width: min(calc(var(--h) * 9.5), calc(var(--w) * 8));
+  aspect-ratio: 1;
+  filter: drop-shadow(0 4px 5px rgba(0,0,0,.5));
+  transition: transform .1s, filter .25s, opacity .25s;
+}
+.btn-rond img { width: 100%; height: 100%; object-fit: contain; }
+.btn-rond:active:not(:disabled) { transform: scale(.92); }
+.btn-rond:disabled { cursor: default; opacity: .55; filter: grayscale(1) brightness(.7); }
+
+.badge {
+  position: absolute;
+  top: -6%;
+  right: -6%;
+  width: 36%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--creme);
+  border: 2px solid var(--or);
+  color: var(--encre-marine);
+  font-family: var(--f-titre);
+  font-weight: 800;
+  font-size: min(calc(var(--h) * 2), calc(var(--w) * 1.7));
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,.4);
+}
+
+/* ---------- Pop-ups (parchemin) ---------- */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 14, 24, .55);
+  animation: fondu .3s ease-out;
+}
+.voile-fin { background: rgba(10, 8, 6, .72); }
+
+.parchemin {
+  container-type: inline-size;
+  width: min(calc(var(--w) * 62), calc(var(--h) * 92));
+  aspect-ratio: 1300 / 871;
+  padding: 11.5% 13% 11%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--w) * 1.3);
+  text-align: center;
+  background: url("../assets/parchemin.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.55));
+  animation: deroule .45s cubic-bezier(.2, .9, .3, 1.2);
+}
+.surtitre {
+  margin: 0;
+  font-family: var(--f-titre);
+  font-weight: 700;
+  font-size: 3.9cqw;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--rouge-sang);
+}
+.grand-mot {
+  margin: 0;
+  font-family: var(--f-titre);
+  font-weight: 800;
+  font-size: 8.6cqw;
+  line-height: 1.05;
+  letter-spacing: .04em;
+  color: var(--encre-marine);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.grand-mot.petit { font-size: 6cqw; }
+.filet {
+  width: 34%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--or) 20%, var(--or) 80%, transparent);
+}
+.definition {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 4.4cqw;
+  line-height: 1.32;
+  font-weight: 500;
+  color: var(--encre-brune);
+  text-wrap: pretty;
+}
+.score {
+  margin: 0;
+  font-family: var(--f-titre);
+  font-weight: 700;
+  font-size: 3.8cqw;
+  color: var(--encre-marine);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.btn-plaque {
+  margin-top: 1cqw;
+  min-width: 44cqw;
+  aspect-ratio: 800 / 166;
+  padding: 0 6cqw;
+  display: grid;
+  place-items: center;
+  background: url("../assets/cartouche.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.4));
+  font-family: var(--f-titre);
+  font-weight: 700;
+  font-size: 3.9cqw;
+  letter-spacing: .06em;
+  color: var(--creme);
+  transition: transform .1s;
+}
+.btn-plaque:active { transform: scale(.95); }
+
+.parchemin-reglages { width: min(calc(var(--w) * 48), calc(var(--h) * 72)); gap: calc(var(--w) * 1); }
+.parchemin-reglages .btn-plaque { margin: 0; font-size: 3.9cqw; min-width: 58cqw; }
+.liste-reglages { display: flex; flex-direction: column; align-items: center; gap: 1.8cqw; }
+
+@keyframes fondu { from { opacity: 0; } }
+@keyframes deroule { from { transform: scale(.85) translateY(4%); opacity: 0; } }
+
+/* ---------- Tablette en portrait ---------- */
+.tourner {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  place-items: center;
+  padding: 0 max(16px, env(safe-area-inset-left, 0px)) 0 max(16px, env(safe-area-inset-right, 0px));
+  background: var(--encre-marine);
+  color: var(--creme);
+  font-family: var(--f-titre);
+  font-size: 22px;
+  text-align: center;
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .tourner { display: grid; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

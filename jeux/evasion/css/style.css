@@ -1,0 +1,804 @@
+/* ==========================================================
+   L'Évasion — feuille de style
+   Mise en page « scène » : toute l'interface est dessinée dans
+   une zone de 1536 × 1024 (le format du proto), mise à l'échelle
+   par le JS (--u = taille d'un pixel de la maquette).
+   Le décor, lui, couvre tout l'écran. Sur un écran plus large
+   que 3:2, la scène se cale à droite pour laisser voir le forçat.
+   ========================================================== */
+:root {
+  --marine:   #1b3557;   /* bleu nuit des boutons et du texte fort */
+  --encre:    #26354b;   /* texte courant sur papier */
+  --creme:    #f6ecd4;   /* texte sur bleu, pastilles */
+  --sepia:    #6e5130;   /* surtitres, filets (contraste ≥ 4,5:1 sur le parchemin) */
+  --rouge:    #9b2f22;   /* « Repéré ! », fin Repris */
+  --nuit:     #0d1622;   /* fond de secours */
+  --voile-decor: .35;    /* opacité du voile bleu marine sur les décors (0 = aucun) */
+
+  --f-pinceau: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
+  --f-texte:   "Andika", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+
+  --u: 1px;              /* remplacé par le JS */
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--nuit);
+  color: var(--encre);
+  font-family: var(--f-texte);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-offset: calc(var(--u) * 4); border-radius: calc(var(--u) * 10); }
+
+/* ---------- Décor (deux calques pour le fondu) ---------- */
+.decor {
+  position: fixed;
+  inset: 0;
+  background: var(--nuit) center / cover no-repeat;
+  background-position: 18% 50%;   /* garde le forçat (tiers gauche) visible */
+  opacity: 0;
+  transition: opacity .8s ease;
+}
+.decor.visible { opacity: 1; }
+/* Voile bleu marine sur la photo : unifie les décors et fait
+   ressortir les parchemins. Régler l'opacité avec --voile-decor. */
+.decor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--marine);
+  opacity: var(--voile-decor);
+}
+
+/* ---------- Scène ---------- */
+.scene, .scene-popup {
+  position: fixed;
+  width: calc(var(--u) * 1536);
+  height: calc(var(--u) * 1024);
+}
+.ecran { position: absolute; inset: 0; animation: apparition .5s ease both; }
+
+@keyframes apparition { from { opacity: 0; transform: translateY(calc(var(--u) * 12)); } }
+
+/* ---------- Éléments communs ---------- */
+.parchemin {
+  position: absolute;
+  background: url("../assets/ui/parchemin.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--u) * 10) calc(var(--u) * 18) rgba(0, 0, 0, .45));
+  display: flex;
+  flex-direction: column;
+}
+
+.titre-pinceau {
+  margin: 0;
+  font-family: var(--f-pinceau);
+  font-weight: 400;
+  color: var(--marine);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* Les tailles de texte ont un minimum en px : même mise à l'échelle,
+   le texte reste lisible (les tailles du mode compact en dépendent). */
+.texte {
+  margin: 0;
+  font-size: max(15px, calc(var(--u) * 23));
+  line-height: 1.45;
+  color: var(--encre);
+  text-wrap: pretty;
+}
+
+.surtitre {
+  margin: 0;
+  font-size: max(11px, calc(var(--u) * 15));
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+/* Bandeau coup de pinceau (titre de phase) */
+.bandeau {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 300);
+  height: calc(var(--u) * 58);
+  background: url("../assets/ui/pinceau.webp") center / 100% 100% no-repeat;
+  color: var(--creme);
+  font-weight: 700;
+  font-size: calc(var(--u) * 21);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 5) rgba(0, 0, 0, .35));
+}
+
+/* Bouton coup de pinceau */
+.btn-pinceau {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5em;
+  align-self: center;
+  min-height: calc(var(--u) * 62);
+  padding: 0 calc(var(--u) * 46);
+  background: url("../assets/ui/pinceau.webp") center / 100% 100% no-repeat;
+  color: var(--creme);
+  font-family: var(--f-pinceau);
+  font-size: calc(var(--u) * 27);
+  white-space: nowrap;
+  filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 4) rgba(0, 0, 0, .3));
+  transition: transform .12s ease;
+}
+.btn-pinceau:active { transform: scale(.95); }
+.btn-pinceau.secondaire { filter: grayscale(.6) brightness(1.25) drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 4) rgba(0, 0, 0, .3)); }
+@media (hover: hover) { .btn-pinceau:hover { transform: scale(1.04); } }
+
+/* ---------- Boutons ronds : accueil (gauche), son (droite) ---------- */
+.btn-rond {
+  position: fixed;
+  z-index: 15;
+  top: max(calc(var(--u) * 32), env(safe-area-inset-top, 0px));
+  width: max(44px, calc(var(--u) * 66));
+  height: max(44px, calc(var(--u) * 66));
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--marine);
+  border: calc(var(--u) * 3) solid var(--creme);
+  color: var(--creme);
+  box-shadow: 0 calc(var(--u) * 4) calc(var(--u) * 10) rgba(0, 0, 0, .4);
+  transition: transform .12s ease;
+}
+.btn-rond svg { width: 52%; height: 52%; }
+.btn-rond:active { transform: scale(.92); }
+.btn-retour { left: max(calc(var(--u) * 36), env(safe-area-inset-left, 0px)); }
+.btn-son { right: max(calc(var(--u) * 36), env(safe-area-inset-right, 0px)); }
+.btn-son .son-off, .btn-son.muet .son-on { display: none; }
+.btn-son.muet .son-off { display: block; }
+.btn-son.muet { background: #4a5566; }
+
+/* ---------- Mots du glossaire ---------- */
+.mot {
+  display: inline;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-thickness: max(1.5px, calc(var(--u) * 2.2));
+  text-underline-offset: .2em;
+  text-decoration-color: var(--marine);
+  cursor: help;
+}
+.mot-groupe { white-space: nowrap; }
+.mot[aria-expanded="true"] { background: rgba(27, 53, 87, .14); border-radius: 4px; }
+.mot:focus-visible { outline-width: 2px; outline-color: var(--marine); outline-offset: 2px; border-radius: 3px; }
+
+.bulle {
+  position: fixed;
+  z-index: 40;
+  max-width: min(340px, calc(100vw - 20px));
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: var(--marine);
+  color: var(--creme);
+  font-size: 16px;
+  line-height: 1.4;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+  animation: fondu .15s ease both;
+}
+.bulle strong {
+  display: block;
+  font-family: var(--f-pinceau);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.lecteur-seul {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Médaillons des fins découvertes ---------- */
+.medaillons { display: inline-flex; gap: calc(var(--u) * 6); vertical-align: middle; }
+.medaillon {
+  display: grid;
+  place-items: center;
+  width: max(22px, calc(var(--u) * 32));
+  height: max(22px, calc(var(--u) * 32));
+  border-radius: 50%;
+  border: max(1.5px, calc(var(--u) * 2.5)) dashed rgba(27, 53, 87, .5);
+  color: rgba(27, 53, 87, .6);
+  font-family: var(--f-pinceau);
+  font-size: max(13px, calc(var(--u) * 18));
+  line-height: 1;
+}
+.medaillon.trouve {
+  border-style: solid;
+  border-color: var(--marine);
+  background: var(--marine);
+  font-family: var(--f-texte);
+  font-size: max(12px, calc(var(--u) * 16));
+}
+.medaillon.repris.trouve { border-color: var(--rouge); background: var(--rouge); }
+
+/* ==========================================================
+   ÉCRAN ACCUEIL
+   ========================================================== */
+.parchemin-accueil {
+  left: calc(var(--u) * 650);
+  top: calc(var(--u) * 210);
+  width: calc(var(--u) * 800);
+  height: calc(var(--u) * 660);
+  padding: calc(var(--u) * 80) calc(var(--u) * 92) calc(var(--u) * 72);
+  gap: calc(var(--u) * 20);
+  justify-content: center;
+}
+.parchemin-accueil .titre-pinceau { font-size: calc(var(--u) * 56); }
+.liste-histoires {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: calc(var(--u) * 14);
+}
+.choix-histoire {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 8) calc(var(--u) * 16);
+  padding: calc(var(--u) * 14) calc(var(--u) * 22);
+  border: calc(var(--u) * 2.5) solid rgba(27, 53, 87, .35);
+  border-radius: calc(var(--u) * 14);
+  background: rgba(27, 53, 87, .06);
+  text-align: left;
+  transition: transform .12s ease, background .12s ease;
+}
+.choix-histoire:active { transform: scale(.98); }
+@media (hover: hover) { .choix-histoire:hover { background: rgba(27, 53, 87, .13); } }
+.choix-histoire:focus-visible { outline-color: var(--marine); }
+.choix-histoire-titre {
+  font-family: var(--f-pinceau);
+  font-size: max(20px, calc(var(--u) * 34));
+  line-height: 1.05;
+  color: var(--marine);
+}
+.choix-histoire-fins { display: inline-flex; align-items: center; gap: calc(var(--u) * 10); }
+.choix-histoire-compte {
+  font-size: max(12px, calc(var(--u) * 15));
+  font-weight: 700;
+  color: var(--sepia);
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   ÉCRAN INTRO
+   ========================================================== */
+.bandeau-grand {
+  position: absolute;
+  left: calc(var(--u) * 820);
+  top: calc(var(--u) * 92);
+  width: calc(var(--u) * 460);
+  height: calc(var(--u) * 92);
+  font-family: var(--f-pinceau);
+  font-weight: 400;
+  font-size: calc(var(--u) * 58);
+  letter-spacing: .02em;
+  text-transform: none;
+}
+.parchemin-intro {
+  left: calc(var(--u) * 650);
+  top: calc(var(--u) * 210);
+  width: calc(var(--u) * 800);
+  min-height: calc(var(--u) * 540);   /* grandit quand « Comment jouer ? » est ouvert */
+  padding: calc(var(--u) * 64) calc(var(--u) * 92) calc(var(--u) * 56);
+  gap: calc(var(--u) * 15);
+  justify-content: center;
+}
+.parchemin-intro .titre-pinceau { font-size: calc(var(--u) * 58); }
+.parchemin-intro .texte { font-size: max(16px, calc(var(--u) * 27)); }
+.consigne {
+  margin: 0;
+  font-size: max(14px, calc(var(--u) * 20));
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--sepia);
+}
+.parchemin-intro .btn-pinceau { margin-top: calc(var(--u) * 6); }
+
+/* ==========================================================
+   ÉCRAN ÉTAPE
+   ========================================================== */
+.entete {
+  position: absolute;
+  left: calc(var(--u) * 930);
+  top: calc(var(--u) * 34);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 16);
+}
+
+/* Barre de progression : 5 pastilles reliées */
+.progression {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.progression li {
+  position: relative;
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
+  border-radius: 50%;
+  background: var(--creme);
+  border: calc(var(--u) * 4) solid var(--creme);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, .35);
+}
+.progression li + li { margin-left: calc(var(--u) * 62); }
+.progression li + li::before {   /* trait entre deux pastilles */
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: calc(var(--u) * 66);
+  height: calc(var(--u) * 6);
+  transform: translateY(-50%);
+  background: var(--creme);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(0, 0, 0, .25);
+}
+/* étape passée : pastille crème avec un point bleu */
+.progression li.faite::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: var(--marine);
+}
+/* étape en cours : pastille bleue, plus grande */
+.progression li.actuelle {
+  background: var(--marine);
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+/* étapes à venir : trait et pastille estompés */
+.progression li.avenir { background: rgba(246, 236, 212, .45); border-color: rgba(246, 236, 212, .75); }
+.progression li.avenir::before { background: rgba(246, 236, 212, .5); }
+
+/* Colonne de gauche : parchemin du récit + sac */
+.colonne-recit {
+  position: absolute;
+  left: calc(var(--u) * 352);
+  top: calc(var(--u) * 205);
+  width: calc(var(--u) * 510);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 18);
+}
+.parchemin-recit {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 530);
+  padding: calc(var(--u) * 72) calc(var(--u) * 58) calc(var(--u) * 56) calc(var(--u) * 64);
+  gap: calc(var(--u) * 20);
+  justify-content: center;
+}
+.parchemin-recit .titre-pinceau { font-size: calc(var(--u) * 46); }
+.parchemin-recit .texte { font-size: max(15px, calc(var(--u) * 27)); }
+.question {
+  margin: calc(var(--u) * 10) 0 0;
+  font-family: var(--f-pinceau);
+  font-size: calc(var(--u) * 44);
+  line-height: 1.1;
+  color: var(--marine);
+}
+.soulignement {
+  width: calc(var(--u) * 190);
+  height: calc(var(--u) * 14);
+  margin: calc(var(--u) * -14) 0 0 calc(var(--u) * 80);
+  color: var(--marine);
+}
+
+/* Le sac : les atouts gagnés pendant le plan */
+.sac {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 8) calc(var(--u) * 14);
+  padding: calc(var(--u) * 12) calc(var(--u) * 20);
+  border-radius: calc(var(--u) * 14);
+  background: rgba(246, 236, 212, .94);
+  box-shadow: 0 calc(var(--u) * 6) calc(var(--u) * 14) rgba(0, 0, 0, .4);
+}
+.sac-titre {
+  margin: 0;
+  font-family: var(--f-pinceau);
+  font-size: max(18px, calc(var(--u) * 28));
+  line-height: 1;
+  color: var(--marine);
+}
+.sac-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 8);
+}
+.sac-vide {
+  font-size: max(13px, calc(var(--u) * 17));
+  font-style: italic;
+  color: var(--sepia);
+}
+.atout {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 6);
+  padding: calc(var(--u) * 5) calc(var(--u) * 14) calc(var(--u) * 5) calc(var(--u) * 8);
+  border-radius: 999px;
+  background: var(--marine);
+  color: var(--creme);
+  font-size: max(13px, calc(var(--u) * 18));
+  font-weight: 700;
+}
+.atout-icone { font-size: 1.25em; line-height: 1; }
+.atout.nouveau { animation: atout-gagne .7s cubic-bezier(.2, .9, .3, 1.4) .35s both; }
+@keyframes atout-gagne { from { transform: scale(0); } 60% { transform: scale(1.25); } }
+
+/* Cartes de choix */
+.cartes {
+  position: absolute;
+  left: calc(var(--u) * 880);
+  top: calc(var(--u) * 196);
+  display: flex;
+  gap: calc(var(--u) * 22);
+}
+.carte {
+  position: relative;
+  width: calc(var(--u) * 300);
+  height: calc(var(--u) * 545);
+  background: url("../assets/ui/carte.webp") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--u) * 10) calc(var(--u) * 16) rgba(0, 0, 0, .45));
+  text-align: center;
+  color: var(--encre);
+  transform: rotate(var(--r, 0deg));
+  transition: transform .35s cubic-bezier(.2, .9, .3, 1.2), opacity .35s ease, filter .35s ease;
+  animation: carte-entree .55s cubic-bezier(.2, .9, .3, 1.15) both;
+  animation-delay: var(--delai, 0s);
+}
+.carte:nth-child(1) { --r: -1.2deg; --delai: .1s; }
+.carte:nth-child(2) { --r: 1.4deg;  --delai: .22s; }
+@keyframes carte-entree { from { opacity: 0; transform: translateY(calc(var(--u) * 40)) rotate(var(--r)); } }
+
+.carte-image {
+  position: absolute;
+  left: 7.2%;
+  top: 10.4%;
+  width: 84.4%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15), 0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(0, 0, 0, .25);
+}
+.carte-corps {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 51%;
+  bottom: 4.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 8);
+}
+.carte-titre {
+  margin: 0;
+  font-family: var(--f-pinceau);
+  font-weight: 400;
+  font-size: max(15px, calc(var(--u) * 31 * var(--fit, 1)));
+  line-height: 1.02;
+  color: var(--marine);
+  text-wrap: balance;
+}
+.carte-texte {
+  margin: 0;
+  font-size: max(13px, calc(var(--u) * 21 * var(--fit, 1)));
+  line-height: 1.34;
+  text-wrap: pretty;
+}
+/* Indice : l'atout que ce chemin demande (à comparer avec le sac) */
+.carte-indice {
+  position: absolute;
+  right: 4%;
+  top: 7.5%;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 48);
+  height: calc(var(--u) * 48);
+  border-radius: 50%;
+  background: var(--creme);
+  border: calc(var(--u) * 3) solid var(--marine);
+  font-size: calc(var(--u) * 24);
+  line-height: 1;
+  box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(0, 0, 0, .35);
+}
+.carte .btn-pinceau {
+  margin-top: auto;
+  min-height: calc(var(--u) * 54);
+  padding: 0 calc(var(--u) * 34);
+  font-size: calc(var(--u) * 23);
+}
+.carte:active { transform: rotate(var(--r)) scale(.97); }
+@media (hover: hover) { .carte:hover { transform: rotate(0deg) translateY(calc(var(--u) * -6)); } }
+
+/* Après un choix */
+.carte.choisie { transform: rotate(0deg) scale(1.05); z-index: 2; }
+.carte.ecartee { opacity: .35; filter: grayscale(.8) drop-shadow(0 0 0 transparent); transform: rotate(var(--r)) scale(.95); }
+
+/* ==========================================================
+   ÉCRAN FIN
+   ========================================================== */
+/* hauteur selon le contenu, centrée verticalement, calée à droite */
+.ecran-fin { display: flex; }
+.parchemin-fin {
+  position: relative;
+  margin: auto calc(var(--u) * 50) auto auto;
+  width: calc(var(--u) * 760);
+  min-height: calc(var(--u) * 600);
+  padding: calc(var(--u) * 84) calc(var(--u) * 84) calc(var(--u) * 72);
+  gap: calc(var(--u) * 13);
+  justify-content: center;
+}
+.parchemin-fin .titre-pinceau { font-size: calc(var(--u) * 60); }
+.parchemin-fin .texte { font-size: max(16px, calc(var(--u) * 25)); }
+.ecran-fin.repris .titre-pinceau { color: var(--rouge); }
+.nouvelle-fin {
+  margin: 0;
+  font-family: var(--f-pinceau);
+  font-size: max(18px, calc(var(--u) * 28));
+  color: #8a4b00;
+  animation: atout-gagne .7s cubic-bezier(.2, .9, .3, 1.4) .5s both;
+  transform-origin: left center;
+}
+.score {
+  margin: 0;
+  font-size: max(13px, calc(var(--u) * 17));
+  font-weight: 700;
+  color: var(--sepia);
+}
+.score:empty { display: none; }
+
+/* Le chemin suivi : choix séparés par des flèches */
+.chemin {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: max(13px, calc(var(--u) * 17));
+  line-height: 1.45;
+}
+.chemin li { display: inline; }
+.chemin li + li::before { content: " → "; color: var(--sepia); }
+.chemin li.rate { color: var(--rouge); font-weight: 700; }
+.chemin li.rate::after { content: " ✗"; }
+
+.collection {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 8);
+  font-size: max(13px, calc(var(--u) * 17));
+  font-weight: 700;
+  color: var(--sepia);
+}
+.vrai {
+  padding: calc(var(--u) * 16) calc(var(--u) * 20);
+  border-left: calc(var(--u) * 5) solid var(--marine);
+  background: rgba(27, 53, 87, .08);
+  border-radius: 0 calc(var(--u) * 8) calc(var(--u) * 8) 0;
+}
+.vrai-titre {
+  margin: 0 0 calc(var(--u) * 6);
+  font-family: var(--f-pinceau);
+  font-size: max(18px, calc(var(--u) * 27));
+  color: var(--marine);
+}
+.vrai-texte {
+  margin: 0;
+  font-size: max(14px, calc(var(--u) * 19));
+  line-height: 1.4;
+}
+.parchemin-fin .rangee-boutons { margin-top: calc(var(--u) * 6); }
+
+/* ---------- Boutons secondaires qui ouvrent un panneau ---------- */
+.rangee-ctas { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 10); }
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: .45em;
+  min-height: max(40px, calc(var(--u) * 48));
+  padding: 0 calc(var(--u) * 20);
+  border: calc(var(--u) * 2.5) solid var(--marine);
+  border-radius: 999px;
+  background: rgba(27, 53, 87, .06);
+  color: var(--marine);
+  font-size: max(14px, calc(var(--u) * 19));
+  font-weight: 700;
+  transition: transform .12s ease, background .12s ease, color .12s ease;
+}
+.btn-cta::after { content: "▾"; font-size: .9em; transition: transform .2s ease; }
+.btn-cta[aria-expanded="true"] { background: var(--marine); color: var(--creme); }
+.btn-cta[aria-expanded="true"]::after { transform: rotate(180deg); }
+.btn-cta:active { transform: scale(.96); }
+@media (hover: hover) { .btn-cta:hover { background: rgba(27, 53, 87, .14); } .btn-cta[aria-expanded="true"]:hover { background: var(--marine); } }
+.btn-cta:focus-visible { outline-color: var(--marine); }
+
+.panneau { animation: panneau-ouvre .25s ease both; }
+@keyframes panneau-ouvre { from { opacity: 0; transform: translateY(calc(var(--u) * -6)); } }
+.parcours { display: grid; gap: calc(var(--u) * 6); }
+
+.regles {
+  list-style: none;
+  margin: 0;
+  padding: calc(var(--u) * 12) calc(var(--u) * 18);
+  display: grid;
+  gap: calc(var(--u) * 6);
+  border-radius: calc(var(--u) * 10);
+  background: rgba(27, 53, 87, .08);
+  font-size: max(14px, calc(var(--u) * 19));
+  line-height: 1.35;
+}
+.regles li { display: flex; gap: .5em; }
+
+/* ==========================================================
+   POP-UPS
+   ========================================================== */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(8, 14, 24, .55);
+  animation: fondu .3s ease both;
+}
+@keyframes fondu { from { opacity: 0; } }
+
+/* la fenêtre grandit avec son contenu et reste centrée */
+.scene-popup { display: flex; }
+.parchemin-popup {
+  position: relative;
+  margin: auto;
+  width: calc(var(--u) * 720);
+  min-height: calc(var(--u) * 500);
+  padding: calc(var(--u) * 80) calc(var(--u) * 96) calc(var(--u) * 70);
+  gap: calc(var(--u) * 22);
+  justify-content: center;
+  text-align: center;
+  animation: deroule .4s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.parchemin-popup.petit { min-height: calc(var(--u) * 400); }
+.parchemin-popup .titre-pinceau { font-size: calc(var(--u) * 54); }
+.parchemin-popup .texte { font-size: max(16px, calc(var(--u) * 25)); }
+.parchemin-popup.rate .titre-pinceau { color: var(--rouge); }
+.gain {
+  margin: 0;
+  align-self: center;
+  padding: calc(var(--u) * 8) calc(var(--u) * 20);
+  border-radius: 999px;
+  background: var(--marine);
+  color: var(--creme);
+  font-size: max(14px, calc(var(--u) * 20));
+  font-weight: 700;
+  animation: atout-gagne .7s cubic-bezier(.2, .9, .3, 1.4) .2s both;
+}
+.explication {
+  margin: 0;
+  padding: calc(var(--u) * 12) calc(var(--u) * 18);
+  border-left: calc(var(--u) * 5) solid var(--rouge);
+  border-radius: 0 calc(var(--u) * 8) calc(var(--u) * 8) 0;
+  background: rgba(155, 47, 34, .09);
+  color: var(--encre);
+  font-size: max(14px, calc(var(--u) * 21));
+  line-height: 1.4;
+  text-align: left;
+}
+.rangee-boutons { display: flex; justify-content: center; flex-wrap: wrap; gap: calc(var(--u) * 14) calc(var(--u) * 18); }
+@keyframes deroule { from { opacity: 0; transform: scale(.88) translateY(calc(var(--u) * 20)); } }
+
+/* ==========================================================
+   MODE COMPACT (petit écran, petite fenêtre, zoom du navigateur)
+   Le JS ajoute la classe .compact quand la scène serait trop
+   petite pour être lue. Les éléments ne sont plus placés au
+   pixel près : ils s'empilent et la scène défile.
+   ========================================================== */
+.compact .scene {
+  inset: 0;
+  width: auto;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.compact .ecran {
+  position: relative;
+  inset: auto;
+  min-height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  gap: calc(var(--u) * 24);
+  /* place pour les boutons ronds en haut */
+  padding: max(72px, calc(env(safe-area-inset-top, 0px) + 64px)) 16px 28px;
+}
+.compact .ecran-accueil, .compact .ecran-intro { flex-direction: column; flex-wrap: nowrap; }
+.compact .parchemin { position: relative; left: auto; top: auto; max-width: 100%; }
+.compact .bandeau-grand { position: relative; left: auto; top: auto; max-width: 100%; }
+.compact .parchemin-accueil,
+.compact .parchemin-intro { height: auto; }
+.compact .entete { position: relative; left: auto; top: auto; transform: none; flex-basis: 100%; }
+.compact .colonne-recit { position: relative; left: auto; top: auto; max-width: 100%; }
+.compact .parchemin-recit { height: auto; min-height: calc(var(--u) * 420); }
+.compact .cartes { position: relative; left: auto; top: auto; flex-wrap: wrap; justify-content: center; }
+.compact .parchemin-fin { margin: auto; width: calc(var(--u) * 760); min-height: 0; }
+
+.compact .scene-popup {
+  inset: 0;
+  width: auto;
+  height: auto;
+  padding: 16px;
+  overflow-y: auto;
+}
+.compact .parchemin-popup { min-height: 0; }
+.compact .parchemin-popup.petit { min-height: 0; }
+
+/* ---------- Tablette en portrait ---------- */
+.tourner {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  place-items: center;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  background: var(--marine);
+  color: var(--creme);
+  font-family: var(--f-pinceau);
+  font-size: 30px;
+  text-align: center;
+}
+@media (orientation: portrait) and (pointer: coarse) { .tourner { display: grid; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

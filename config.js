@@ -46,14 +46,14 @@ window.FORUM_CONFIG = {
     },
     {
       id: 'classe2',
-      min: 4,
+      min: 6,
       titre: 'Intermédiaire',
       nom: 'Forçat de 2e classe',
       description: "Tu connais les chantiers, les règles et les recoins du pénitencier. Ta bonne conduite commence à se remarquer."
     },
     {
       id: 'classe1',
-      min: 5,
+      min: 9,
       titre: 'Maîtrise',
       nom: 'Forçat de 1re classe',
       description: "Plus rien du bagne n'a de secret pour toi. Les forçats de 1re classe avaient droit à des faveurs : tu les as bien méritées."
@@ -63,34 +63,87 @@ window.FORUM_CONFIG = {
   /* ---------- 8. Les activités du stand ----------
      id          : identifiant court, sans espace ni accent (il est dans le QR code)
      nom         : nom affiché
+     format      : 'Papier' ou 'Numérique' (affiché dans la liste et sur le QR imprimé)
+     jeu         : (numérique) page du jeu, ouverte sur les tablettes du stand (#/tablette).
      description : l'explication donnée au visiteur dans la liste des activités
-     ⚠ Ne pas changer l'id d'une activité après avoir imprimé ses QR codes.
-     ⚠ EXEMPLES À REMPLACER */
+     Chaque activité a son QR code (#/equipe/qr) : le visiteur le scanne
+     quand il a fini l'activité, pour la valider.
+     ⚠ Ne pas changer l'id d'une activité après avoir imprimé ses QR codes. */
   activites: [
     {
-      id: 'tribunal',
-      nom: 'Le tribunal du bagne',
-      description: "Juge les dossiers de détenus et choisis la bonne peine."
+      id: 'decouverte',
+      nom: 'La découverte inversée',
+      format: 'Papier',
+      description: "Déchiffre les rébus des cartes et retrouve chaque lieu sur la carte."
     },
     {
-      id: 'atelier',
-      nom: "L'atelier",
-      description: "Découvre les métiers que les forçats exerçaient sur les chantiers de l'île."
+      id: 'evasion',
+      nom: "L'Évasion",
+      format: 'Numérique',
+      jeu: 'jeux/evasion/index.html',
+      description: "Choisis ton histoire de forçat, puis fais 5 choix pour préparer et réussir ta fuite. Un faux pas et tu es repris !"
     },
     {
-      id: 'infirmerie',
-      nom: "L'infirmerie",
-      description: "Retrouve les remèdes et les gestes de l'époque."
+      id: 'guillotine',
+      nom: 'Le Pendu du Bagne',
+      format: 'Numérique',
+      jeu: 'jeux/guillotine/index.html',
+      description: "Trouve 10 mots du bagne, lettre par lettre, avant que la lame de la guillotine ne tombe."
     },
     {
-      id: 'registre',
-      nom: 'Le registre matricule',
-      description: "Fouille les registres et retrouve la fiche d'un détenu."
+      id: 'avant-apres',
+      nom: 'Avant / après',
+      format: 'Numérique',
+      jeu: 'jeux/avant-apres/index.html',
+      description: "10 lieux du bagne, hier et aujourd'hui : qu'est-ce qui a changé ?"
     },
     {
-      id: 'concession',
-      nom: 'La concession',
-      description: "Imagine la vie d'un libéré sur sa terre, après la peine."
+      id: 'tri-objets',
+      nom: 'Inventaire',
+      format: 'Numérique',
+      jeu: 'jeux/tri-objets/index.html',
+      description: "Pain, briques, chaux… glisse chaque objet dans la caisse du lieu du bagne où il était fabriqué."
+    },
+    {
+      id: 'anachronisme',
+      nom: "Cherche l'anachronisme",
+      format: 'Papier',
+      description: "Dans la grande scène dessinée, repère l'objet qui n'existait pas à l'époque."
+    },
+    {
+      id: 'memory-sonore',
+      nom: 'Le memory sonore',
+      format: 'Numérique',
+      jeu: 'jeux/memory-sonore/index.html',
+      description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
+    },
+    {
+      id: 'devine-peine',
+      nom: 'Devine la peine',
+      format: 'Numérique',
+      jeu: 'jeux/devine-peine/index.html',
+      description: "Doubler dans une file, chiper un bonbon… combien d'années de bagne en 1870 ?"
+    },
+    {
+      id: 'zoom',
+      nom: 'Plein cadre',
+      format: 'Numérique',
+      jeu: 'jeux/zoom/index.html',
+      description: "Un détail en gros plan : devine ce que c'est. Plus tu trouves vite, plus tu marques de points."
+    },
+    {
+      id: '4-images',
+      nom: '4 images, 1 mot',
+      format: 'Numérique',
+      jeu: 'jeux/4-images/index.html',
+      description: "Quatre images ont un point commun : trouve le mot du bagne qui les relie."
+    },
+    {
+      id: 'argot',
+      nom: 'Les Mots du Bagne',
+      format: 'Numérique',
+      jeu: 'jeux/argot/index.html',
+      description: "Carabousse, chiourme, doublage… retrouve le vrai sens de 10 mots du bagne."
     }
   ]
 };
