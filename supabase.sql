@@ -45,6 +45,11 @@ create policy "mise a jour fiche" on public.visiteurs for update to anon using (
 create policy "lecture scans"     on public.scans     for select to anon using (true);
 create policy "validation"        on public.scans     for insert to anon with check (true);
 
+-- Accès de la clé "anon" aux tables (utile si "Exposer automatiquement de nouvelles tables" est décoché)
+grant usage on schema public to anon;
+grant select, insert, update on public.visiteurs to anon;
+grant select, insert         on public.scans     to anon;
+
 -- 4. Les photos (bucket public, JPEG de 2 Mo max)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('photos', 'photos', true, 2097152, array['image/jpeg'])
