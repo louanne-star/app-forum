@@ -652,7 +652,9 @@
     });
 
     await charger();
-    nettoyage = db.suivre(charger);
+    // Le temps réel peut rater un événement (connexion pas encore prête, wifi coupé) : filet de sécurité.
+    const stop = db.suivre(charger), filet = setInterval(charger, 15000);
+    nettoyage = () => { stop(); clearInterval(filet); };
   }
 
   function posteQR(zone) {

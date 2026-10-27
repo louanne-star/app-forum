@@ -9,8 +9,8 @@ window.FORUM_CONFIG = {
      pour tester l'appli seule mais RIEN n'est partagé entre téléphones.
      Le jour du forum : coller l'URL et la clé "anon public" du projet
      (Supabase > Project Settings > API). */
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://kcmjeykhnoffoolgxaeu.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbWpleWtobm9mZm9vbGd4YWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNzA1MzgsImV4cCI6MjEwODY0NjUzOH0.IzWeR5VDmQvvOeHIGErIDQseWL615Sd0EEjiR4yya5o',
 
   /* ---------- 2. Adresse publique du site ----------
      Sert à générer les QR codes. Mettre l'adresse Netlify, par ex.
