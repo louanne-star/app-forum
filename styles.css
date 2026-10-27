@@ -261,8 +261,13 @@ body.avec-action .page { padding-bottom: 120px; }
 .copiable:focus-visible { outline: 2px solid var(--gold-ink); outline-offset: 2px; }
 .fiche-carte { aspect-ratio: 1050 / 600; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); display: grid; place-items: center; box-shadow: var(--shadow-sm); }
 .fiche-carte img { width: 100%; height: 100%; display: block; }
-.fiche-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.fiche-actions .btn { padding-inline: 8px; }
+.sur-planche { border-style: solid; border-color: var(--gold); }
+.planche { border: 2px solid var(--gold); }
+.planche select { margin-left: 6px; font: 700 15px var(--mono); padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--line-dossier); background: var(--surface); color: var(--ink); }
+.planche-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.planche-etapes li { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: var(--radius-md); background: var(--surface); }
+.planche-etapes li.fait { opacity: .6; }
+.n-etape { width: 32px; height: 32px; border-radius: var(--radius-full); border: 2px solid var(--gold-ink); color: var(--gold-ink); display: grid; place-items: center; font: 800 15px/1 var(--display); }
 .vide { text-align: center; padding: 32px 16px; color: var(--ink-muted); border: 2px dashed var(--line); border-radius: var(--radius-lg); }
 .alerte { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--ink); border-radius: var(--radius-md); padding: 12px 14px; font-size: 14px; }
 

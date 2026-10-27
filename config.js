@@ -20,12 +20,6 @@ window.FORUM_CONFIG = {
   /* ---------- 3. Code d'accès de l'espace équipe (#/equipe) ---------- */
   codeEquipe: '1864',
 
-  /* ---------- 3 bis. Impression de la carte matricule ----------
-     'a4'    : imprimante classique, la carte sort à taille réelle (88,9 × 50,8 mm)
-               en haut d'une feuille A4, avec un pointillé pour découper.
-     'carte' : imprimante à cartes / papier déjà au format carte de visite. */
-  formatImpression: 'a4',
-
   /* ---------- 4. Nombre minimum d'activités pour terminer le parcours ---------- */
   minActivites: 3,
 

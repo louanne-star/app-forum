@@ -32,8 +32,13 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 - **Espace équipe** (sur l'ordi d'impression) : `<adresse>/#/equipe`, code dans `config.js` (`codeEquipe`).
   - Chaque inscription arrive en direct avec un petit son (clique une fois dans la page pour l'activer). La plus ancienne est en premier.
   - Chaque fiche montre la **carte matricule déjà remplie** (photo, NOM, prénom, matricule) sur le modèle Canva.
-  - **1 · Imprimer la carte** ouvre l'impression (taille réelle 88,9 × 50,8 mm ; réglage `formatImpression` dans config.js). Dans la fenêtre d'impression, mettre l'échelle à **100 %** et décocher « En-têtes et pieds de page ».
-  - **2 · Carte imprimée** : la fiche disparaît de la liste (« Voir aussi les imprimées » pour la retrouver).
+  - **Planche** (jusqu'à 10 cartes par A4 épaisse, recto-verso à la main, Epson ET-15000) :
+    1. **Imprimer le recto** (échelle **100 %**, marges « aucune », sans en-têtes ni pieds de page).
+    2. Remettre **la même feuille**, retournée comme une page de livre (le haut reste en haut).
+    3. **Imprimer le verso** : il est placé en miroir pour tomber pile derrière chaque recto.
+    4. Découper le long des traits dans les marges, puis **« ces cartes sont imprimées »**.
+  - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer.
+  - **Avant le forum : faire une planche test sur papier normal** pour vérifier dans quel sens remettre la feuille dans l'imprimante (regarder la feuille à la lumière : recto et verso doivent se superposer).
   - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
 - **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`Carte matricule/7.png`) ne change pas : à imprimer à l'avance.
   - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).

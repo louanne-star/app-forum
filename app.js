@@ -78,24 +78,10 @@
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     } catch (e) { console.error(e); window.open(url, '_blank'); }
   }
-  async function copierPhoto(url) {
-    try {
-      // La promesse est passée directement à ClipboardItem : Safari l'exige.
-      const png = (async () => {
-        const bmp = await createImageBitmap(await (await fetch(url)).blob());
-        const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
-        c.getContext('2d').drawImage(bmp, 0, 0);
-        return new Promise(ok => c.toBlob(ok, 'image/png'));
-      })();
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
-      toast('Photo copiée : colle-la dans Canva (Ctrl/Cmd + V)');
-    } catch (e) { console.error(e); toast('Copie impossible : utilise « Télécharger »'); }
-  }
-
   /* ================= Carte matricule ================= */
   /* Positions mesurées sur le modèle Canva (carte/recto.png, 1050 × 600 px = 88,9 × 50,8 mm). */
   const CARTE = {
-    fond: 'carte/recto.png', l: 1050, h: 600,
+    fond: 'carte/recto.png', verso: 'carte/verso.png', l: 1050, h: 600,
     photo: { x: 43, y: 55, l: 351, h: 436 },
     cadre: { x: 40, y: 52, l: 356, h: 442, ep: 6 },
     texte: { x: 428, l: 290, nom: 184, prenom: 269, taille: 83 },
@@ -155,22 +141,48 @@
     }
     return cacheCartes.get(cle);
   }
-  function imprimerCarte(url) {
-    const carte = C.formatImpression === 'carte';
+  /* Planche A4 : 2 × 5 cartes à taille réelle. Le verso est placé en miroir pour
+     une feuille retournée comme une page de livre, et déborde un peu (fond perdu)
+     pour pardonner un léger décalage. Repères de coupe dans les marges du recto. */
+  const PLANCHE = { l: 88.9, h: 50.8, cols: 2, rows: 5, gout: 4, perdu: 1.5, pageL: 210, pageH: 297 };
+  PLANCHE.max = PLANCHE.cols * PLANCHE.rows;
+  PLANCHE.x0 = (PLANCHE.pageL - (PLANCHE.cols * PLANCHE.l + (PLANCHE.cols - 1) * PLANCHE.gout)) / 2;
+  PLANCHE.y0 = (PLANCHE.pageH - (PLANCHE.rows * PLANCHE.h + (PLANCHE.rows - 1) * PLANCHE.gout)) / 2;
+  function imprimerPlanche(urls, verso) {
+    const P = PLANCHE, mm = n => n.toFixed(2) + 'mm';
+    const imgs = urls.map((u, i) => {
+      const c = i % P.cols, r = Math.floor(i / P.cols);
+      const col = verso ? P.cols - 1 - c : c, d = verso ? P.perdu : 0;
+      const x = P.x0 + col * (P.l + P.gout), y = P.y0 + r * (P.h + P.gout);
+      return `<img src="${u}" style="left:${mm(x - d)};top:${mm(y - d)};width:${mm(P.l + 2 * d)};height:${mm(P.h + 2 * d)}">`;
+    }).join('');
+    let reperes = '';
+    if (!verso) {
+      const xs = [], ys = [];
+      for (let c = 0; c < P.cols; c++) { const x = P.x0 + c * (P.l + P.gout); xs.push(x, x + P.l); }
+      for (let r = 0; r < P.rows; r++) { const y = P.y0 + r * (P.h + P.gout); ys.push(y, y + P.h); }
+      const xFin = xs[xs.length - 1], yFin = ys[ys.length - 1];
+      xs.forEach(x => { reperes += `<i style="left:${mm(x)};top:${mm(3)};width:.2mm;height:${mm(P.y0 - 5)}"></i><i style="left:${mm(x)};top:${mm(yFin + 2)};width:.2mm;height:${mm(P.pageH - yFin - 5)}"></i>`; });
+      ys.forEach(y => { reperes += `<i style="top:${mm(y)};left:${mm(3)};height:.2mm;width:${mm(P.x0 - 5)}"></i><i style="top:${mm(y)};left:${mm(xFin + 2)};height:.2mm;width:${mm(P.pageL - xFin - 5)}"></i>`; });
+    }
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
     document.body.appendChild(f);
     const d = f.contentDocument;
     d.open();
-    d.write(`<!doctype html><html><head><meta charset="utf-8"><style>
-      @page { size: ${carte ? '88.9mm 50.8mm' : 'A4'}; margin: ${carte ? '0' : '12mm'}; }
+    d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${verso ? 'Verso' : 'Recto'}</title><style>
+      @page { size: A4 portrait; margin: 0; }
       html, body { margin: 0; }
-      img { display: block; width: 88.9mm; height: 50.8mm; ${carte ? '' : 'outline: .2mm dashed #aaa;'} }
-    </style></head><body><img src="${url}"></body></html>`);
+      .feuille { position: relative; width: ${P.pageL}mm; height: ${P.pageH}mm; overflow: hidden; }
+      img { position: absolute; display: block; }
+      i { position: absolute; background: #000; }
+    </style></head><body><div class="feuille">${imgs}${reperes}</div></body></html>`);
     d.close();
-    const img = d.querySelector('img');
-    const go = () => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 60000); };
-    img.complete ? go() : (img.onload = go);
+    const images = [...d.images];
+    Promise.all(images.map(i => i.complete ? null : new Promise(ok => { i.onload = i.onerror = ok; }))).then(() => {
+      f.contentWindow.focus(); f.contentWindow.print();
+      setTimeout(() => f.remove(), 60000);
+    });
   }
 
   /* ================= Données ================= */
@@ -653,17 +665,72 @@
     if (onglet === 'qr') return posteQR(zone);
 
     let voirTout = false;
+    let nbVoulu = PLANCHE.max;   // nombre de cartes souhaité sur la prochaine planche
+    let enCours = null;          // ids figés au moment d'imprimer le recto
+    let etape = 0;               // 0 : rien d'imprimé, 1 : recto imprimé, 2 : verso imprimé
     zone.innerHTML = `<div class="stack">
         <div class="stats" id="stats"></div>
+        <section class="panneau planche" id="planche"></section>
         <div class="row" style="justify-content:space-between">
-          <div><h1>À imprimer</h1><p class="muted small">Les inscriptions arrivent ici en direct, dans l'ordre d'arrivée (la plus ancienne en premier). « Imprimer la carte », puis « Carte imprimée » une fois qu'elle est sortie.</p></div>
+          <div><h1>File d'attente</h1><p class="muted small">Les inscriptions arrivent ici en direct. Les visiteurs qui ont terminé leur parcours passent en premier, puis l'ordre d'arrivée.</p></div>
           <button class="btn btn-discret btn-sm" id="tout">Voir aussi les imprimées</button>
         </div>
         <div class="grille" id="liste"></div></div>`;
 
-    const liste = document.getElementById('liste');
+    const liste = document.getElementById('liste'), panneau = document.getElementById('planche');
     const tout = document.getElementById('tout');
     tout.onclick = () => { voirTout = !voirTout; tout.textContent = voirTout ? 'Masquer les imprimées' : 'Voir aussi les imprimées'; dessiner(); };
+
+    /* Ordre de la file : parcours terminé d'abord (la carte est attendue à la porte), puis arrivée. */
+    const file = () => donnees.filter(v => !v.imprime).sort((a, b) =>
+      (!!b.niveau - !!a.niveau) || (a.niveau ? (a.termine_at || '').localeCompare(b.termine_at || '') : 0) || a.created_at.localeCompare(b.created_at));
+    const prochaine = () => enCours ? enCours.map(id => donnees.find(v => v.id === id)).filter(Boolean) : file().slice(0, nbVoulu);
+
+    function dessinerPlanche() {
+      const cartes = prochaine(), n = cartes.length, attente = file().length;
+      if (!enCours && !attente) { panneau.innerHTML = '<h2>Planche à imprimer</h2><p class="muted small">Aucune carte en attente.</p>'; return; }
+      panneau.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <h2>Planche à imprimer · ${pluriel(n, 'carte')}</h2>
+          ${enCours ? '<button class="btn btn-discret btn-sm" data-pl="annuler">Annuler cette planche</button>'
+            : `<label class="small muted">Cartes sur la feuille
+                 <select data-pl="nb">${Array.from({ length: Math.min(attente, PLANCHE.max) }, (_, i) => `<option ${i + 1 === n ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>`}
+        </div>
+        <p class="small">${cartes.map(v => `<b>#${esc(v.matricule)}</b> ${esc(nomComplet(v))}`).join(' · ')}</p>
+        <ol class="planche-etapes">
+          <li class="${etape > 0 ? 'fait' : ''}"><button class="btn ${etape === 0 ? 'btn-or' : 'btn-discret'}" data-pl="recto">1 · Imprimer le recto</button>
+            <span class="small muted">Feuille A4 épaisse. Dans la fenêtre d'impression : échelle 100 %, sans marges ni en-têtes.</span></li>
+          <li class="${etape > 1 ? 'fait' : ''}"><span class="n-etape">2</span>
+            <span class="small"><b>Remets la même feuille</b> dans l'imprimante, <b>retournée comme une page de livre</b> (le haut reste en haut).</span></li>
+          <li class="${etape > 1 ? 'fait' : ''}"><button class="btn ${etape === 1 ? 'btn-or' : 'btn-discret'}" data-pl="verso" ${etape < 1 ? 'disabled' : ''}>3 · Imprimer le verso</button></li>
+          <li><button class="btn ${etape === 2 ? 'btn-or' : 'btn-discret'}" data-pl="fini" ${etape < 2 ? 'disabled' : ''}>4 · Découpé : ${n > 1 ? `ces ${n} cartes sont imprimées` : 'carte imprimée'}</button>
+            <span class="small muted">Découpe en suivant les traits dans les marges.</span></li>
+        </ol>`;
+    }
+
+    panneau.addEventListener('change', e => { if (e.target.dataset.pl === 'nb') { nbVoulu = Number(e.target.value); dessinerPlanche(); dessiner(); } });
+    panneau.addEventListener('click', async e => {
+      const b = e.target.closest('[data-pl]'); if (!b || b.tagName === 'SELECT') return;
+      const act = b.dataset.pl;
+      if (act === 'annuler') { enCours = null; etape = 0; dessiner(); return; }
+      if (act === 'recto' || act === 'verso') {
+        const cartes = prochaine(); if (!cartes.length) return;
+        b.disabled = true;
+        try {
+          if (act === 'recto') { enCours = cartes.map(v => v.id); imprimerPlanche(await Promise.all(cartes.map(imageCarte)), false); etape = Math.max(etape, 1); }
+          else { imprimerPlanche(cartes.map(() => CARTE.verso), true); etape = 2; }
+        } catch (err) { console.error(err); toast('Planche impossible à préparer, vérifie le réseau'); }
+        dessiner(); return;
+      }
+      if (act === 'fini') {
+        b.disabled = true;
+        try {
+          await Promise.all(prochaine().map(v => db.maj(v.id, { imprime: true })));
+          toast(`${pluriel(enCours.length, 'carte')} marquée${enCours.length > 1 ? 's' : ''} imprimée${enCours.length > 1 ? 's' : ''}`);
+          enCours = null; etape = 0; await charger();
+        } catch (err) { console.error(err); b.disabled = false; toast('Action impossible, vérifie le réseau'); }
+      }
+    });
 
     let donnees = [], connus = null;
     async function charger() {
@@ -686,32 +753,29 @@
         <div class="stat"><span class="label">En visite</span><b>${donnees.filter(v => !v.niveau).length}</b></div>
         <div class="stat"><span class="label">Parcours terminés</span><b>${donnees.filter(v => v.niveau).length}</b></div>`;
 
-      const items = (voirTout ? donnees : aImprimer).slice().sort((a, b) => (a.imprime - b.imprime) || a.created_at.localeCompare(b.created_at));
-      liste.innerHTML = items.length ? items.map((v, i) => fiche(v, voirTout ? null : i + 1)).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
+      const items = voirTout ? [...file(), ...donnees.filter(v => v.imprime).sort((a, b) => a.created_at.localeCompare(b.created_at))] : file();
+      const surPlanche = new Set(prochaine().map(v => v.id));
+      liste.innerHTML = items.length ? items.map(v => fiche(v, surPlanche.has(v.id))).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
+      dessinerPlanche();
       apercus();
     }
 
-    function fiche(v, rang) {
+    function fiche(v, surPlanche) {
       const nb = v.scans.filter(activite).length;
       const nv = v.niveau ? niveau(v.niveau) : null;
-      return `<article class="dossier fiche">
+      return `<article class="dossier fiche ${surPlanche ? 'sur-planche' : ''}">
         <div class="dossier-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span>
-          <span class="registre muted">${rang ? `${rang}<sup>${rang === 1 ? 'er' : 'e'}</sup> · ` : ''}${heure(v.created_at)}</span></div>
+          <span class="registre muted">${surPlanche ? '<span class="pastille or">Sur la planche</span> ' : ''}${heure(v.created_at)}</span></div>
         <div class="fiche-carte" data-carte="${v.id}"><span class="muted small">Préparation de la carte…</span></div>
         <div class="row" style="justify-content:space-between">
           <span class="fiche-nom">${esc(nomComplet(v))}</span>
           ${nv ? `<span class="pastille or">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
         </div>
-        ${v.imprime
-          ? `<div class="row"><button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · annuler</button>
-             <button class="btn btn-discret btn-sm" data-act="carte-print" data-id="${v.id}">Réimprimer</button></div>`
-          : `<div class="fiche-actions">
-               <button class="btn btn-or" data-act="carte-print" data-id="${v.id}">1 · Imprimer la carte</button>
-               <button class="btn btn-ligne" data-act="imprime" data-id="${v.id}" data-val="1">2 · Carte imprimée</button>
-             </div>`}
         <div class="row">
+          ${v.imprime
+            ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · remettre dans la file</button>`
+            : `<button class="btn btn-discret btn-sm" data-act="imprime" data-id="${v.id}" data-val="1">Marquer imprimée</button>`}
           <button class="btn btn-discret btn-sm" data-act="carte-dl" data-id="${v.id}">Télécharger la carte</button>
-          ${v.photo ? `<button class="btn btn-discret btn-sm" data-act="photo-copie" data-id="${v.id}">Copier la photo</button>` : ''}
         </div>
       </article>`;
     }
@@ -731,13 +795,9 @@
       const b = e.target.closest('[data-act]');
       if (!b) return;
       const v = donnees.find(x => x.id === b.dataset.id); if (!v) return;
-      if (b.dataset.act === 'photo-copie') return copierPhoto(v.photo);
-      if (b.dataset.act === 'carte-print' || b.dataset.act === 'carte-dl') {
-        try {
-          const url = await imageCarte(v);
-          if (b.dataset.act === 'carte-print') imprimerCarte(url);
-          else telechargerPhoto(url, `carte-${v.matricule}-${norm(v.nom)}.png`.replace(/[^a-z0-9.-]+/g, '-'));
-        } catch (err) { console.error(err); toast('Carte impossible à préparer, vérifie le réseau'); }
+      if (b.dataset.act === 'carte-dl') {
+        try { telechargerPhoto(await imageCarte(v), `carte-${v.matricule}-${norm(v.nom)}.png`.replace(/[^a-z0-9.-]+/g, '-')); }
+        catch (err) { console.error(err); toast('Carte impossible à préparer, vérifie le réseau'); }
         return;
       }
       b.disabled = true;
