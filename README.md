@@ -31,8 +31,11 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 
 - **Espace équipe** (sur l'ordi d'impression) : `<adresse>/#/equipe`, code dans `config.js` (`codeEquipe`).
   - Chaque inscription arrive en direct avec un petit son (clique une fois dans la page pour l'activer). La plus ancienne est en premier.
-  - **Copier la photo** puis Ctrl/Cmd + V dans Canva (ou **Télécharger**). Touche le matricule, le prénom ou le nom pour les copier.
-  - Imprime, puis **Carte imprimée** : la fiche disparaît de la liste (« Voir aussi les imprimées » pour la retrouver).
+  - Chaque fiche montre la **carte matricule déjà remplie** (photo, NOM, prénom, matricule) sur le modèle Canva.
+  - **1 · Imprimer la carte** ouvre l'impression (taille réelle 88,9 × 50,8 mm ; réglage `formatImpression` dans config.js). Dans la fenêtre d'impression, mettre l'échelle à **100 %** et décocher « En-têtes et pieds de page ».
+  - **2 · Carte imprimée** : la fiche disparaît de la liste (« Voir aussi les imprimées » pour la retrouver).
+  - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
+- **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`Carte matricule/7.png`) ne change pas : à imprimer à l'avance.
   - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).
 - **Visiteur qui change de téléphone** : lien « J'ai déjà un dossier » (matricule + nom).
 - **Matricule déjà pris** : l'appli demande au visiteur d'en choisir un autre.

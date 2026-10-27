@@ -259,9 +259,10 @@ body.avec-action .page { padding-bottom: 120px; }
 .copiable { all: unset; cursor: copy; border-bottom: 1px dashed var(--line-dossier); }
 .copiable:hover { color: var(--gold-ink); }
 .copiable:focus-visible { outline: 2px solid var(--gold-ink); outline-offset: 2px; }
-.fiche-corps { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: start; }
-.fiche-photo { width: 96px; aspect-ratio: 7 / 9; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line-dossier); background: var(--surface); }
-.vide-photo { display: grid; place-items: center; text-align: center; font-size: 12px; color: var(--ink-muted); }
+.fiche-carte { aspect-ratio: 1050 / 600; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); display: grid; place-items: center; box-shadow: var(--shadow-sm); }
+.fiche-carte img { width: 100%; height: 100%; display: block; }
+.fiche-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fiche-actions .btn { padding-inline: 8px; }
 .vide { text-align: center; padding: 32px 16px; color: var(--ink-muted); border: 2px dashed var(--line); border-radius: var(--radius-lg); }
 .alerte { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--ink); border-radius: var(--radius-md); padding: 12px 14px; font-size: 14px; }
 

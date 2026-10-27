@@ -92,6 +92,87 @@
     } catch (e) { console.error(e); toast('Copie impossible : utilise « Télécharger »'); }
   }
 
+  /* ================= Carte matricule ================= */
+  /* Positions mesurées sur le modèle Canva (carte/recto.png, 1050 × 600 px = 88,9 × 50,8 mm). */
+  const CARTE = {
+    fond: 'carte/recto.png', l: 1050, h: 600,
+    photo: { x: 43, y: 55, l: 351, h: 436 },
+    cadre: { x: 40, y: 52, l: 356, h: 442, ep: 6 },
+    texte: { x: 428, l: 290, nom: 184, prenom: 269, taille: 83 },
+    badge: { x: 434, y: 310, l: 251, h: 104, r: 18, taille: 92 },
+    brun: '#6d5b4a', encre: '#655b52', creme: '#f6eedd',
+    police: "'Roboto Slab', Georgia, serif", serrage: 0.78,
+  };
+  const chargerImage = src => new Promise((ok, ko) => {
+    const i = new Image(); i.crossOrigin = 'anonymous';
+    i.onload = () => ok(i); i.onerror = () => ko(new Error('image ' + src)); i.src = src;
+  });
+  async function dessinerCarte(v) {
+    await document.fonts.load(`800 ${CARTE.texte.taille}px ${CARTE.police}`).catch(() => {});
+    const [fond, photo] = await Promise.all([chargerImage(CARTE.fond), v.photo ? chargerImage(v.photo).catch(() => null) : null]);
+    const c = document.createElement('canvas'); c.width = CARTE.l; c.height = CARTE.h;
+    const x = c.getContext('2d');
+    x.drawImage(fond, 0, 0, CARTE.l, CARTE.h);
+
+    const P = CARTE.photo;
+    x.fillStyle = '#e9dfca'; x.fillRect(P.x, P.y, P.l, P.h);
+    if (photo) {
+      const r = Math.max(P.l / photo.naturalWidth, P.h / photo.naturalHeight);
+      const l = P.l / r, h = P.h / r;
+      x.drawImage(photo, (photo.naturalWidth - l) / 2, (photo.naturalHeight - h) / 2, l, h, P.x, P.y, P.l, P.h);
+    }
+    x.strokeStyle = CARTE.brun; x.lineWidth = CARTE.cadre.ep;
+    x.strokeRect(CARTE.cadre.x, CARTE.cadre.y, CARTE.cadre.l, CARTE.cadre.h);
+
+    /* Texte resserré comme sur le modèle ; rétréci si le nom est long. */
+    const ecrire = (texte, gauche, base, taille, largeurMax, centre = false) => {
+      let sx = CARTE.serrage;
+      x.font = `800 ${taille}px ${CARTE.police}`;
+      let w = x.measureText(texte).width * sx;
+      if (w > largeurMax) { sx = Math.max(0.62, sx * largeurMax / w); w = x.measureText(texte).width * sx; }
+      if (w > largeurMax) { taille *= largeurMax / w; x.font = `800 ${taille}px ${CARTE.police}`; w = x.measureText(texte).width * sx; }
+      x.save(); x.translate(centre ? gauche - w / 2 : gauche, base); x.scale(sx, 1); x.fillText(texte, 0, 0); x.restore();
+    };
+    const T = CARTE.texte;
+    x.fillStyle = CARTE.encre; x.textBaseline = 'alphabetic';
+    ecrire(v.nom.toUpperCase(), T.x, T.nom, T.taille, T.l);
+    ecrire(v.prenom.charAt(0).toUpperCase() + v.prenom.slice(1), T.x, T.prenom, T.taille, T.l);
+
+    const B = CARTE.badge;
+    x.fillStyle = CARTE.brun; x.beginPath(); x.roundRect(B.x, B.y, B.l, B.h, B.r); x.fill();
+    x.fillStyle = CARTE.creme; x.textBaseline = 'middle';
+    ecrire('#' + v.matricule, B.x + B.l / 2, B.y + B.h / 2 + 4, B.taille, B.l - 36, true);
+    return c;
+  }
+  /* Image de la carte, gardée en cache tant que nom / prénom / photo ne changent pas. */
+  const cacheCartes = new Map();
+  function imageCarte(v) {
+    const cle = [v.id, v.prenom, v.nom, v.matricule, v.photo].join('|');
+    if (!cacheCartes.has(cle)) {
+      cacheCartes.set(cle, dessinerCarte(v)
+        .then(c => new Promise(ok => c.toBlob(b => ok(URL.createObjectURL(b)), 'image/png')))
+        .catch(e => { cacheCartes.delete(cle); throw e; }));
+    }
+    return cacheCartes.get(cle);
+  }
+  function imprimerCarte(url) {
+    const carte = C.formatImpression === 'carte';
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(f);
+    const d = f.contentDocument;
+    d.open();
+    d.write(`<!doctype html><html><head><meta charset="utf-8"><style>
+      @page { size: ${carte ? '88.9mm 50.8mm' : 'A4'}; margin: ${carte ? '0' : '12mm'}; }
+      html, body { margin: 0; }
+      img { display: block; width: 88.9mm; height: 50.8mm; ${carte ? '' : 'outline: .2mm dashed #aaa;'} }
+    </style></head><body><img src="${url}"></body></html>`);
+    d.close();
+    const img = d.querySelector('img');
+    const go = () => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 60000); };
+    img.complete ? go() : (img.onload = go);
+  }
+
   /* ================= Données ================= */
   const db = DEMO ? magasinDemo() : magasinSupabase();
 
@@ -575,7 +656,7 @@
     zone.innerHTML = `<div class="stack">
         <div class="stats" id="stats"></div>
         <div class="row" style="justify-content:space-between">
-          <div><h1>À imprimer</h1><p class="muted small">Les inscriptions arrivent ici en direct, dans l'ordre d'arrivée (la plus ancienne en premier). Copie les infos et la photo dans Canva, imprime, puis « Marquer imprimée ».</p></div>
+          <div><h1>À imprimer</h1><p class="muted small">Les inscriptions arrivent ici en direct, dans l'ordre d'arrivée (la plus ancienne en premier). « Imprimer la carte », puis « Carte imprimée » une fois qu'elle est sortie.</p></div>
           <button class="btn btn-discret btn-sm" id="tout">Voir aussi les imprimées</button>
         </div>
         <div class="grille" id="liste"></div></div>`;
@@ -607,32 +688,41 @@
 
       const items = (voirTout ? donnees : aImprimer).slice().sort((a, b) => (a.imprime - b.imprime) || a.created_at.localeCompare(b.created_at));
       liste.innerHTML = items.length ? items.map((v, i) => fiche(v, voirTout ? null : i + 1)).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
+      apercus();
     }
 
     function fiche(v, rang) {
       const nb = v.scans.filter(activite).length;
       const nv = v.niveau ? niveau(v.niveau) : null;
-      const fichierPhoto = `${v.matricule}-${norm(v.prenom)}-${norm(v.nom)}.jpg`.replace(/[^a-z0-9.-]+/g, '-');
       return `<article class="dossier fiche">
         <div class="dossier-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span>
           <span class="registre muted">${rang ? `${rang}<sup>${rang === 1 ? 'er' : 'e'}</sup> · ` : ''}${heure(v.created_at)}</span></div>
-        <div class="fiche-corps">
-          ${v.photo ? `<img class="fiche-photo" src="${esc(v.photo)}" alt="Photo de ${esc(v.prenom)}" loading="lazy">` : '<div class="fiche-photo vide-photo">Pas de photo</div>'}
-          <div class="stack-sm" style="min-width:0">
-            <div><span class="label" style="color:var(--ink-muted)">Prénom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.prenom)}" title="Copier le prénom">${esc(v.prenom)}</button></div></div>
-            <div><span class="label" style="color:var(--ink-muted)">Nom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.nom)}" title="Copier le nom">${esc(v.nom)}</button></div></div>
-            ${nv ? `<span class="pastille or">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
-          </div>
-        </div>
-        <div class="row">
-          ${v.photo ? `<button class="btn btn-discret btn-sm" data-act="photo-copie" data-id="${v.id}">Copier la photo</button>
-          <button class="btn btn-discret btn-sm" data-act="photo-dl" data-id="${v.id}" data-nom="${esc(fichierPhoto)}">Télécharger</button>` : ''}
-          <button class="btn btn-discret btn-sm" data-copie="${esc(`${v.prenom} ${v.nom}\nMatricule #${v.matricule}`)}">Copier le texte</button>
+        <div class="fiche-carte" data-carte="${v.id}"><span class="muted small">Préparation de la carte…</span></div>
+        <div class="row" style="justify-content:space-between">
+          <span class="fiche-nom">${esc(nomComplet(v))}</span>
+          ${nv ? `<span class="pastille or">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
         </div>
         ${v.imprime
-          ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · annuler</button>`
-          : `<button class="btn btn-or" data-act="imprime" data-id="${v.id}" data-val="1">Carte imprimée</button>`}
+          ? `<div class="row"><button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · annuler</button>
+             <button class="btn btn-discret btn-sm" data-act="carte-print" data-id="${v.id}">Réimprimer</button></div>`
+          : `<div class="fiche-actions">
+               <button class="btn btn-or" data-act="carte-print" data-id="${v.id}">1 · Imprimer la carte</button>
+               <button class="btn btn-ligne" data-act="imprime" data-id="${v.id}" data-val="1">2 · Carte imprimée</button>
+             </div>`}
+        <div class="row">
+          <button class="btn btn-discret btn-sm" data-act="carte-dl" data-id="${v.id}">Télécharger la carte</button>
+          ${v.photo ? `<button class="btn btn-discret btn-sm" data-act="photo-copie" data-id="${v.id}">Copier la photo</button>` : ''}
+        </div>
       </article>`;
+    }
+
+    /* Remplit les aperçus de cartes (dessinés une seule fois grâce au cache). */
+    function apercus() {
+      liste.querySelectorAll('[data-carte]').forEach(el => {
+        const v = donnees.find(x => x.id === el.dataset.carte); if (!v) return;
+        imageCarte(v).then(url => { el.innerHTML = `<img src="${url}" alt="Carte matricule de ${esc(nomComplet(v))}">`; })
+          .catch(e => { console.error(e); el.innerHTML = '<span class="erreur small">Carte impossible à dessiner (photo ?)</span>'; });
+      });
     }
 
     liste.addEventListener('click', async e => {
@@ -642,7 +732,14 @@
       if (!b) return;
       const v = donnees.find(x => x.id === b.dataset.id); if (!v) return;
       if (b.dataset.act === 'photo-copie') return copierPhoto(v.photo);
-      if (b.dataset.act === 'photo-dl') return telechargerPhoto(v.photo, b.dataset.nom);
+      if (b.dataset.act === 'carte-print' || b.dataset.act === 'carte-dl') {
+        try {
+          const url = await imageCarte(v);
+          if (b.dataset.act === 'carte-print') imprimerCarte(url);
+          else telechargerPhoto(url, `carte-${v.matricule}-${norm(v.nom)}.png`.replace(/[^a-z0-9.-]+/g, '-'));
+        } catch (err) { console.error(err); toast('Carte impossible à préparer, vérifie le réseau'); }
+        return;
+      }
       b.disabled = true;
       try {
         await db.maj(v.id, { imprime: b.dataset.val === '1' });
