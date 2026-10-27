@@ -63,7 +63,7 @@ window.FORUM_CONFIG = {
   /* ---------- 8. Les activités du stand ----------
      id          : identifiant court, sans espace ni accent (il est dans le QR code)
      nom         : nom affiché
-     format      : 'Papier' ou 'Numérique' (affiché dans la liste et sur le QR imprimé)
+     format      : 'Papier', 'Numérique' ou 'Réalité virtuelle' (affiché dans la liste et sur le QR imprimé)
      jeu         : (numérique) page du jeu, ouverte sur les tablettes du stand (#/tablette).
      description : l'explication donnée au visiteur dans la liste des activités
      Chaque activité a son QR code (#/equipe/qr) : le visiteur le scanne
@@ -118,13 +118,6 @@ window.FORUM_CONFIG = {
       description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
     },
     {
-      id: 'devine-peine',
-      nom: 'Devine la peine',
-      format: 'Numérique',
-      jeu: 'jeux/devine-peine/index.html',
-      description: "Doubler dans une file, chiper un bonbon… combien d'années de bagne en 1870 ?"
-    },
-    {
       id: 'zoom',
       nom: 'Plein cadre',
       format: 'Numérique',
@@ -144,6 +137,14 @@ window.FORUM_CONFIG = {
       format: 'Numérique',
       jeu: 'jeux/argot/index.html',
       description: "Carabousse, chiourme, doublage… retrouve le vrai sens de 10 mots du bagne."
+    },
+    {
+      /* Sur le casque, pas sur les tablettes : ouvrir https://vr-forum.netlify.app
+         dans le navigateur du casque. */
+      id: 'vr',
+      nom: "L'île Nou en réalité virtuelle",
+      format: 'Réalité virtuelle',
+      description: "Enfilez le casque et plongez dans le bagne de l’île Nou : choisissez un lieu sur la carte d’époque, puis explorez une salle d’exposition virtuelle avec photos d’archives, récits et ambiance sonore."
     }
   ]
 };
