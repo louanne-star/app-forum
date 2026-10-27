@@ -20,80 +20,77 @@ window.FORUM_CONFIG = {
   /* ---------- 3. Code d'accès de l'espace équipe (#/equipe) ---------- */
   codeEquipe: '1864',
 
-  /* ---------- 4. Nombre minimum d'activités pour obtenir son verdict ---------- */
+  /* ---------- 4. Nombre minimum d'activités pour terminer le parcours ---------- */
   minActivites: 3,
 
-  /* ---------- 5. Les rôles (un autocollant par rôle) ----------
-     id          : identifiant court, sans espace ni accent
-     nom         : ce qui s'affiche
-     description : petit texte affiché au visiteur avec son verdict
-     autocollant : repère pour l'équipe à la sortie (couleur, n°…)
-     En cas d'égalité de points, le rôle placé le plus HAUT gagne.
-     ⚠ EXEMPLES À REMPLACER */
-  roles: [
+  /* ---------- 5. Message affiché quand le visiteur termine ---------- */
+  messageFin: "Sors par la porte arrière du stand : l'équipe t'y remet ta carte matricule.",
+
+  /* ---------- 6. Phrase de consentement (case à cocher à l'inscription) ---------- */
+  consentement: "J'accepte que ma photo et mon nom servent uniquement à imprimer ma carte matricule. Ils seront supprimés après le forum.",
+
+  /* ---------- 7. Les niveaux (selon le nombre d'activités faites) ----------
+     min         : nombre d'activités validées pour atteindre ce niveau
+     titre       : le niveau en clair (débutant, intermédiaire…)
+     nom         : le grade au bagne
+     description : petit texte affiché au visiteur à la fin
+     Le visiteur reçoit le niveau le plus haut qu'il a atteint.
+     ⚠ Ajuster les "min" quand la vraie liste d'activités est connue. */
+  niveaux: [
     {
-      id: 'transporte',
-      nom: 'Forçat transporté',
-      description: "Condamné aux travaux forcés, tu as fait la traversée jusqu'à l'île Nou. Tes journées se passent aux chantiers, sous le regard des surveillants.",
-      autocollant: 'Autocollant n°1'
+      id: 'classe3',
+      min: 3,
+      titre: 'Débutant',
+      nom: 'Forçat de 3e classe',
+      description: "Tout juste débarqué à l'île Nou, tu découvres la vie du bagne. Les surveillants t'ont à l'œil : encore un peu d'expérience et tu monteras en classe."
     },
     {
-      id: 'surveillant',
-      nom: 'Surveillant militaire',
-      description: "Tu fais respecter le règlement du pénitencier. Rondes, appels, registres : rien ne t'échappe.",
-      autocollant: 'Autocollant n°2'
+      id: 'classe2',
+      min: 4,
+      titre: 'Intermédiaire',
+      nom: 'Forçat de 2e classe',
+      description: "Tu connais les chantiers, les règles et les recoins du pénitencier. Ta bonne conduite commence à se remarquer."
     },
     {
-      id: 'medecin',
-      nom: 'Médecin de marine',
-      description: "Tu soignes les malades et les blessés du bagne à l'infirmerie, avec les moyens du bord.",
-      autocollant: 'Autocollant n°3'
-    },
-    {
-      id: 'libere',
-      nom: 'Libéré concessionnaire',
-      description: "Ta peine est purgée. On t'a attribué une concession de terre : à toi de la faire vivre.",
-      autocollant: 'Autocollant n°4'
+      id: 'classe1',
+      min: 5,
+      titre: 'Maîtrise',
+      nom: 'Forçat de 1re classe',
+      description: "Plus rien du bagne n'a de secret pour toi. Les forçats de 1re classe avaient droit à des faveurs : tu les as bien méritées."
     }
   ],
 
-  /* ---------- 6. Les activités de la salle ----------
+  /* ---------- 8. Les activités du stand ----------
      id          : identifiant court, sans espace ni accent (il est dans le QR code)
      nom         : nom affiché
-     description : l'explication donnée au visiteur quand il scanne
-     points      : combien de points l'activité donne à chaque rôle
+     description : l'explication donnée au visiteur dans la liste des activités
      ⚠ Ne pas changer l'id d'une activité après avoir imprimé ses QR codes.
      ⚠ EXEMPLES À REMPLACER */
   activites: [
     {
       id: 'tribunal',
       nom: 'Le tribunal du bagne',
-      description: "Juge les dossiers de détenus et choisis la bonne peine.",
-      points: { surveillant: 2, transporte: 1 }
+      description: "Juge les dossiers de détenus et choisis la bonne peine."
     },
     {
       id: 'atelier',
       nom: "L'atelier",
-      description: "Découvre les métiers que les forçats exerçaient sur les chantiers de l'île.",
-      points: { transporte: 2, libere: 1 }
+      description: "Découvre les métiers que les forçats exerçaient sur les chantiers de l'île."
     },
     {
       id: 'infirmerie',
       nom: "L'infirmerie",
-      description: "Retrouve les remèdes et les gestes de l'époque.",
-      points: { medecin: 3 }
+      description: "Retrouve les remèdes et les gestes de l'époque."
     },
     {
       id: 'registre',
       nom: 'Le registre matricule',
-      description: "Fouille les registres et retrouve la fiche d'un détenu.",
-      points: { surveillant: 2, medecin: 1 }
+      description: "Fouille les registres et retrouve la fiche d'un détenu."
     },
     {
       id: 'concession',
       nom: 'La concession',
-      description: "Imagine la vie d'un libéré sur sa terre, après la peine.",
-      points: { libere: 3 }
+      description: "Imagine la vie d'un libéré sur sa terre, après la peine."
     }
   ]
 };

@@ -1,41 +1,50 @@
 # Forçats'Nou — appli du forum
 
-Le visiteur s'inscrit à l'entrée (prénom, nom, matricule de 4 chiffres), scanne le QR code de chaque activité, puis reçoit son rôle au bagne. L'équipe imprime les cartes en direct et colle l'autocollant du rôle à la sortie.
+Le visiteur s'inscrit à l'entrée (prénom, nom, matricule de 4 chiffres, photo d'identité). L'équipe reçoit sa fiche en direct, dans l'ordre d'arrivée, et imprime sa carte matricule sur Canva. Pendant la visite, l'appli sert de guide : liste des activités, bouton « Scanner » pour valider chaque activité. Le visiteur fait les activités qu'il veut (au moins 3), termine son parcours, découvre son niveau au bagne et sort par la porte arrière récupérer sa carte.
 
 ## Les fichiers
 
 | Fichier | Rôle |
 |---|---|
-| `config.js` | **Le seul fichier à modifier** : Supabase, activités, rôles, points, code équipe |
+| `config.js` | **Le seul fichier à modifier** : Supabase, activités, niveaux, message de fin, code équipe |
 | `index.html`, `app.js`, `styles.css` | L'appli (pas besoin d'y toucher) |
-| `supabase.sql` | Script qui crée la base |
+| `supabase.sql` | Script qui crée la base et le stockage des photos |
 
 ## Tester tout de suite (mode démo)
 
 Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server* de VS Code). Sans Supabase, l'appli tourne en **mode démo** : les données restent dans le navigateur. Ouvre deux onglets (un visiteur, un `#/equipe`) pour voir la synchro.
 
+⚠ Le scanner intégré a besoin de la caméra, donc d'une adresse en **https** : il marche sur le site Netlify, pas forcément en local sur un téléphone.
+
 ## Mise en place pour le forum
 
-1. **Supabase** : créer un nouveau projet → *SQL Editor* → coller `supabase.sql` → *Run*.
+1. **Supabase** : créer un projet → *SQL Editor* → coller `supabase.sql` → *Run* (crée les tables et le dossier `photos`).
 2. **config.js** : coller `supabaseUrl` et `supabaseAnonKey` (*Project Settings → API*, clé `anon public`).
 3. **Netlify** : glisser le dossier sur app.netlify.com/drop. Mettre l'adresse obtenue dans `baseUrl` (config.js) puis redéployer.
-4. **Activités et rôles** : remplir les listes dans `config.js` (les exemples sont à remplacer). Le rôle d'un visiteur = celui qui a le plus de points ; en cas d'égalité, le rôle le plus haut dans la liste gagne.
-5. **QR codes** : ouvrir `<adresse>/#/equipe/qr` et imprimer la page (Ctrl/Cmd + P). Un QR pour l'entrée, un par activité.
+4. **Activités** : remplacer les exemples dans `config.js` (nom + description).
+5. **Niveaux** : ajuster les `min` des 3 niveaux (Débutant, Intermédiaire, Maîtrise) selon le nombre réel d'activités.
+6. **QR codes** : ouvrir `<adresse>/#/equipe/qr` et imprimer la page (Ctrl/Cmd + P). Un QR pour l'entrée, un par activité.
 
 ⚠ Ne change plus l'`id` d'une activité une fois ses QR codes imprimés.
 
 ## Le jour J
 
-- **Espace équipe** : `<adresse>/#/equipe` (code dans `config.js`, `codeEquipe`).
-  - **Impression** : chaque inscription arrive en direct. Touche le matricule, le prénom ou le nom pour le copier, colle-le dans le template Canva, imprime, puis « Marquer imprimée ».
-  - **Sortie** : cherche le visiteur par matricule ou nom. Sa fiche indique son rôle et le repère de l'autocollant. « Carte remise » une fois donnée. Si son téléphone a lâché, « Rendre le verdict » calcule le rôle à sa place.
+- **Espace équipe** (sur l'ordi d'impression) : `<adresse>/#/equipe`, code dans `config.js` (`codeEquipe`).
+  - Chaque inscription arrive en direct avec un petit son (clique une fois dans la page pour l'activer). La plus ancienne est en premier.
+  - **Copier la photo** puis Ctrl/Cmd + V dans Canva (ou **Télécharger**). Touche le matricule, le prénom ou le nom pour les copier.
+  - Imprime, puis **Carte imprimée** : la fiche disparaît de la liste (« Voir aussi les imprimées » pour la retrouver).
+  - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).
 - **Visiteur qui change de téléphone** : lien « J'ai déjà un dossier » (matricule + nom).
 - **Matricule déjà pris** : l'appli demande au visiteur d'en choisir un autre.
+- **Caméra refusée** : le visiteur peut aussi scanner le QR d'une activité avec l'appareil photo de son téléphone, ça valide pareil.
 
 ## Après le forum
 
-Vider les données : dernière ligne de `supabase.sql` (`truncate …`). La base contient les noms des visiteurs : supprime-les une fois l'événement terminé.
+- Vider les données : dernière ligne de `supabase.sql` (`truncate …`).
+- Supprimer les photos : Supabase → *Storage* → `photos` → tout sélectionner → *Delete*.
+
+C'est promis aux visiteurs dans la phrase de consentement : à faire juste après l'événement.
 
 ## Sécurité, en clair
 
-Le code équipe protège l'écran, pas la base : quelqu'un de très motivé pourrait lire la liste des prénoms/noms avec la clé publique. C'est acceptable pour une journée de forum, à condition de vider la base ensuite.
+Le code équipe protège l'écran, pas la base : quelqu'un de très motivé pourrait lire la liste des noms et des photos avec la clé publique. C'est acceptable pour une journée de forum, à condition de tout supprimer ensuite.

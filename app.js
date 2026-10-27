@@ -1,25 +1,29 @@
 /* Forçats'Nou — appli de forum (visiteur + espace équipe).
    Routes (hash) :
-     #/                 accueil + inscription
+     #/                 accueil + inscription (avec photo)
+     #/parcours         guide : liste des activités, progression, fin
+     #/scanner          scanner de QR code intégré
      #/activite/<id>    validation d'une activité (cible des QR codes)
-     #/parcours         progression du visiteur
-     #/verdict          rôle final
+     #/fin              parcours terminé : niveau + sortie
      #/retrouver        retrouver son dossier (autre téléphone / navigateur)
-     #/equipe[/impression|sortie|qr]   espace équipe (code d'accès)       */
+     #/equipe[/impression|qr]   espace équipe (code d'accès)              */
 (() => {
   'use strict';
 
   const C = window.FORUM_CONFIG;
   const app = document.getElementById('app');
   const DEMO = !(C.supabaseUrl && C.supabaseAnonKey);
+  const TITRE = "Forçats'Nou";
 
   /* ================= Utilitaires ================= */
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
   const activite = id => C.activites.find(a => a.id === id);
-  const role = id => C.roles.find(r => r.id === id);
+  const niveau = id => C.niveaux.find(n => n.id === id);
+  const minimum = () => Math.min(C.minActivites, C.activites.length);
   const heure = iso => iso ? new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
   const nomComplet = v => `${v.prenom} ${v.nom.toUpperCase()}`;
+  const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
   const store = {
     get(k, s = localStorage) { try { return s.getItem(k); } catch { return null; } },
     set(k, v, s = localStorage) { try { v == null ? s.removeItem(k) : s.setItem(k, v); } catch { /* stockage indisponible */ } },
@@ -31,7 +35,7 @@
     let t = document.querySelector('.toast');
     if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
     t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
   }
   async function copier(texte) {
     try { await navigator.clipboard.writeText(texte); toast('Copié'); }
@@ -42,6 +46,51 @@
     }
   }
   const aller = route => { location.hash = '#/' + route; };
+
+  /* Le niveau atteint = le plus haut dont le minimum est atteint. */
+  function niveauPour(nbActivites) {
+    const tries = C.niveaux.slice().sort((a, b) => a.min - b.min);
+    return tries.filter(n => nbActivites >= n.min).pop() || tries[0];
+  }
+
+  /* ================= Photo ================= */
+  /* Recadre au format photo d'identité (35 × 45 mm) et compresse en JPEG. */
+  const PHOTO_L = 700, PHOTO_H = 900;
+  async function preparerPhoto(fichier) {
+    const url = URL.createObjectURL(fichier);
+    try {
+      const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+      const ratio = PHOTO_L / PHOTO_H;
+      let sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
+      if (sw / sh > ratio) { const l = sh * ratio; sx = (sw - l) / 2; sw = l; }
+      else { const h = sw / ratio; sy = (sh - h) * 0.4; sh = h; } // un peu vers le haut : le visage y est souvent
+      const c = document.createElement('canvas'); c.width = PHOTO_L; c.height = PHOTO_H;
+      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, PHOTO_L, PHOTO_H);
+      return await new Promise((ok, ko) => c.toBlob(b => b ? ok(b) : ko(new Error('toBlob')), 'image/jpeg', 0.85));
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function telechargerPhoto(url, nomFichier) {
+    try {
+      const blob = await (await fetch(url)).blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = nomFichier;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch (e) { console.error(e); window.open(url, '_blank'); }
+  }
+  async function copierPhoto(url) {
+    try {
+      // La promesse est passée directement à ClipboardItem : Safari l'exige.
+      const png = (async () => {
+        const bmp = await createImageBitmap(await (await fetch(url)).blob());
+        const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+        c.getContext('2d').drawImage(bmp, 0, 0);
+        return new Promise(ok => c.toBlob(ok, 'image/png'));
+      })();
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      toast('Photo copiée : colle-la dans Canva (Ctrl/Cmd + V)');
+    } catch (e) { console.error(e); toast('Copie impossible : utilise « Télécharger »'); }
+  }
 
   /* ================= Données ================= */
   const db = DEMO ? magasinDemo() : magasinSupabase();
@@ -58,10 +107,13 @@
     const ecrire = d => { memoire = d; store.set(KEY, JSON.stringify(d)); bc && bc.postMessage(1); notifier(); };
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
     return {
-      async creer({ prenom, nom, matricule }) {
+      async deposerPhoto(blob) {
+        return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+      },
+      async creer({ prenom, nom, matricule, photo }) {
         const d = lire();
         if (d.visiteurs.some(v => v.matricule === matricule)) throw { code: 'MATRICULE_PRIS' };
-        const v = { id: uid(), prenom, nom, matricule, role: null, imprime: false, remis: false, created_at: new Date().toISOString(), termine_at: null };
+        const v = { id: uid(), prenom, nom, matricule, photo, niveau: null, imprime: false, created_at: new Date().toISOString(), termine_at: null };
         d.visiteurs.push(v); ecrire(d); return v;
       },
       async lire(id) { return lire().visiteurs.find(v => v.id === id) || null; },
@@ -82,6 +134,11 @@
     const sb = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey);
     const ok = ({ data, error }) => { if (error) throw error; return data; };
     return {
+      async deposerPhoto(blob) {
+        const chemin = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
+        ok(await sb.storage.from('photos').upload(chemin, blob, { contentType: 'image/jpeg' }));
+        return sb.storage.from('photos').getPublicUrl(chemin).data.publicUrl;
+      },
       async creer(v) {
         const r = await sb.from('visiteurs').insert(v).select().single();
         if (r.error) { if (r.error.code === '23505') throw { code: 'MATRICULE_PRIS' }; throw r.error; }
@@ -114,18 +171,6 @@
     };
   }
 
-  /* ================= Calcul du rôle ================= */
-  function calculerRole(scans) {
-    const score = Object.fromEntries(C.roles.map(r => [r.id, 0]));
-    scans.forEach(id => {
-      const a = activite(id); if (!a) return;
-      Object.entries(a.points || {}).forEach(([r, p]) => { if (r in score) score[r] += Number(p) || 0; });
-    });
-    let meilleur = C.roles[0];
-    C.roles.forEach(r => { if (score[r.id] > score[meilleur.id]) meilleur = r; });
-    return meilleur;
-  }
-
   /* ================= Visiteur courant ================= */
   async function moi() {
     const id = store.get(K_MOI);
@@ -139,6 +184,8 @@
   let nettoyage = null;
   function cadre(contenu, { mat = '', equipe = false } = {}) {
     document.body.classList.toggle('equipe', equipe);
+    document.body.classList.remove('avec-action');
+    document.title = TITRE;
     app.innerHTML = `
       <header class="bandeau"><div class="bandeau-in">
         <a class="marque" href="#/">Forçats<span>'</span>Nou</a>
@@ -160,21 +207,21 @@
   /* ================= Écrans visiteur ================= */
   async function ecranAccueil() {
     const v = await moi();
-    if (v) return aller(v.role ? 'verdict' : 'parcours');
+    if (v) return aller(v.niveau ? 'fin' : 'parcours');
     const attente = activite(store.get(K_ATTENTE, sessionStorage));
     cadre(`
       <section class="stack">
         <p class="label">Pénitencier de l'île Nou</p>
         <h1 class="display-xl">Ouvre ton dossier</h1>
-        <p class="muted">Tu entres au bagne. Fais les activités de la salle et découvre, à la sortie, qui tu aurais été ici au XIX<sup>e</sup> siècle.</p>
+        <p class="muted">Bienvenue au bagne ! Inscris-toi pour recevoir ta carte matricule, puis découvre les activités du stand.</p>
       </section>
 
       <section class="panneau" aria-labelledby="t-guide">
         <h2 id="t-guide">Comment ça marche</h2>
         <ol class="etapes">
-          <li><span class="n">1</span><div><b>Inscris-toi</b><span class="muted small">Prénom, nom et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
-          <li><span class="n">2</span><div><b>Fais les activités</b><span class="muted small">À chaque activité, scanne son QR code avec l'appareil photo de ton téléphone.</span></div></li>
-          <li><span class="n">3</span><div><b>Reçois ton verdict</b><span class="muted small">À la sortie, l'appli te donne ton rôle et l'équipe te remet ta carte de forçat.</span></div></li>
+          <li><span class="n">1</span><div><b>Inscris-toi</b><span class="muted small">Prénom, nom, photo et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
+          <li><span class="n">2</span><div><b>Fais les activités de ton choix</b><span class="muted small">Tu es libre ! Au moins ${minimum()}, dans l'ordre que tu veux. Scanne le QR code de chaque activité avec le bouton « Scanner » de l'appli.</span></div></li>
+          <li><span class="n">3</span><div><b>Termine ton parcours</b><span class="muted small">Découvre ton niveau, puis sors par la porte arrière récupérer ta carte matricule.</span></div></li>
         </ol>
       </section>
 
@@ -186,33 +233,68 @@
         <div class="champ"><label for="nom">Nom</label><input type="text" id="nom" autocomplete="family-name" maxlength="60" required></div>
         <div class="champ"><label for="matricule">Ton matricule (4 chiffres)</label>
           <input id="matricule" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" class="matricule-input" placeholder="····" required>
-          <span class="aide">Choisis 4 chiffres et retiens-les : l'équipe te retrouvera grâce à eux à la sortie.</span></div>
+          <span class="aide">Choisis 4 chiffres et retiens-les : ils seront imprimés sur ta carte.</span></div>
+
+        <div class="champ">
+          <span class="champ-titre">Ta photo (format identité)</span>
+          <div class="photo-zone">
+            <div class="photo-cadre" id="apercu" aria-live="polite"><span class="photo-vide" aria-hidden="true"></span></div>
+            <div class="stack-sm" style="flex:1;min-width:0">
+              <label class="btn btn-ligne btn-sm">Prendre une photo<input class="fichier" type="file" accept="image/*" capture="user" data-photo></label>
+              <label class="btn btn-discret btn-sm">Choisir dans ma galerie<input class="fichier" type="file" accept="image/*" data-photo></label>
+              <span class="aide">De face, visage bien centré, sur un fond clair.</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="consent"><input type="checkbox" id="consent"><span>${esc(C.consentement)}</span></label>
         <p class="erreur" id="err" hidden></p>
         <button class="btn btn-or btn-bloc" type="submit">Entrer au bagne</button>
       </form>
       <p class="pied"><a href="#/retrouver">J'ai déjà un dossier</a></p>`);
 
     const f = document.getElementById('f'), err = document.getElementById('err');
-    const mat = document.getElementById('matricule');
+    const mat = document.getElementById('matricule'), apercu = document.getElementById('apercu');
+    const erreur = msg => { err.textContent = msg; err.hidden = false; err.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
+    let photo = null;      // Blob JPEG recadré
+    let photoUrl = null;   // adresse une fois envoyée (réutilisée si on réessaie)
     mat.addEventListener('input', () => { mat.value = mat.value.replace(/\D/g, '').slice(0, 4); });
+
+    f.querySelectorAll('[data-photo]').forEach(inp => inp.addEventListener('change', async () => {
+      const fichier = inp.files && inp.files[0]; inp.value = '';
+      if (!fichier) return;
+      apercu.classList.add('charge');
+      try {
+        photo = await preparerPhoto(fichier); photoUrl = null;
+        apercu.innerHTML = `<img src="${URL.createObjectURL(photo)}" alt="Ta photo">`;
+        err.hidden = true;
+      } catch (e2) { console.error(e2); erreur("Cette image n'a pas pu être ouverte. Essaie une autre photo."); }
+      apercu.classList.remove('charge');
+    }));
+
     f.addEventListener('submit', async e => {
       e.preventDefault();
       const prenom = f.prenom.value.trim(), nom = f.nom.value.trim(), matricule = mat.value;
       err.hidden = true;
-      if (!prenom || !nom) { err.textContent = 'Indique ton prénom et ton nom.'; err.hidden = false; return; }
-      if (!/^\d{4}$/.test(matricule)) { err.textContent = 'Le matricule doit faire exactement 4 chiffres.'; err.hidden = false; mat.focus(); return; }
-      const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Ouverture…';
+      if (!prenom || !nom) return erreur('Indique ton prénom et ton nom.');
+      if (!/^\d{4}$/.test(matricule)) { mat.focus(); return erreur('Le matricule doit faire exactement 4 chiffres.'); }
+      if (!photo) return erreur('Ajoute ta photo : elle sera imprimée sur ta carte matricule.');
+      if (!f.consent.checked) return erreur('Coche la case pour accepter que ta photo serve à imprimer ta carte.');
+      const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Envoi de ta fiche…';
       try {
-        const v = await db.creer({ prenom, nom, matricule });
+        // Vérifié avant l'envoi de la photo pour ne pas en déposer pour rien.
+        if (await db.parMatricule(matricule)) throw { code: 'MATRICULE_PRIS' };
+        photoUrl = photoUrl || await db.deposerPhoto(photo);
+        const v = await db.creer({ prenom, nom, matricule, photo: photoUrl });
         store.set(K_MOI, v.id);
         const att = store.get(K_ATTENTE, sessionStorage);
         store.set(K_ATTENTE, null, sessionStorage);
         aller(att && activite(att) ? 'activite/' + att : 'parcours');
       } catch (e2) {
-        err.textContent = e2 && e2.code === 'MATRICULE_PRIS'
+        erreur(e2 && e2.code === 'MATRICULE_PRIS'
           ? `Le matricule ${matricule} est déjà pris par un autre forçat. Choisis 4 autres chiffres.`
-          : "L'inscription n'est pas passée. Vérifie ta connexion et réessaie.";
-        err.hidden = false; b.disabled = false; b.textContent = 'Entrer au bagne';
+          : "L'inscription n'est pas passée. Vérifie ta connexion et réessaie.");
+        b.disabled = false; b.textContent = 'Entrer au bagne';
         if (!(e2 && e2.code)) console.error(e2);
       }
     });
@@ -237,7 +319,7 @@
         if (!v || norm(v.nom) !== norm(f.nom.value)) { err.textContent = 'Aucun dossier ne correspond. Vérifie les 4 chiffres et l\'orthographe du nom.'; err.hidden = false; return; }
         store.set(K_MOI, v.id);
         const att = store.get(K_ATTENTE, sessionStorage); store.set(K_ATTENTE, null, sessionStorage);
-        aller(att && activite(att) && !v.role ? 'activite/' + att : (v.role ? 'verdict' : 'parcours'));
+        aller(att && activite(att) && !v.niveau ? 'activite/' + att : (v.niveau ? 'fin' : 'parcours'));
       } catch (e2) { panne(e2); }
     });
   }
@@ -245,18 +327,18 @@
   async function ecranActivite(id) {
     const a = activite(id);
     if (!a) {
-      cadre(`<section class="dossier"><h2>QR code inconnu</h2><p class="muted">Ce QR code ne correspond à aucune activité. Préviens un membre de l'équipe.</p><a class="btn btn-ligne" href="#/parcours">Voir mon parcours</a></section>`);
+      cadre(`<section class="dossier"><h2>QR code inconnu</h2><p class="muted">Ce QR code ne correspond à aucune activité. Préviens un membre de l'équipe.</p><a class="btn btn-ligne" href="#/parcours">Voir les activités</a></section>`);
       return;
     }
     const v = await moi();
     if (!v) { store.set(K_ATTENTE, id, sessionStorage); return aller(''); }
-    if (v.role) {
-      cadre(`<section class="dossier"><h2>Ton verdict est déjà rendu</h2><p class="muted">Ton parcours est terminé, cette activité ne compte plus. Tu peux quand même la découvrir.</p><a class="btn btn-or" href="#/verdict">Revoir mon verdict</a></section>`, { mat: v.matricule });
+    if (v.niveau) {
+      cadre(`<section class="dossier"><h2>Ton parcours est terminé</h2><p class="muted">Cette activité ne compte plus, mais tu peux quand même la découvrir. N'oublie pas ta carte matricule à la porte arrière !</p><a class="btn btn-or" href="#/fin">Revoir mon niveau</a></section>`, { mat: v.matricule });
       return;
     }
     const res = await db.scanner(v.id, id);
     const faites = await db.scans(v.id);
-    const n = faites.filter(activite).length, total = C.activites.length;
+    const n = faites.filter(activite).length, total = C.activites.length, min = minimum();
     cadre(`
       <section class="dossier" style="align-items:center;text-align:center">
         <div class="tampon ${res === 'ok' ? 'ok anim' : ''}" aria-hidden="true">${res === 'ok' ? 'Validé' : 'Déjà<br>validé'}<small>${n} / ${total}</small></div>
@@ -267,97 +349,173 @@
       <section class="panneau">
         <p class="label">Et maintenant ?</p>
         <p class="muted small">${n >= total
-          ? 'Tu as fait toutes les activités. Va à la sortie pour recevoir ton verdict.'
-          : `Rejoins une autre activité et scanne son QR code. Il t'en reste ${total - n}.`}</p>
-        <a class="btn btn-or btn-bloc" href="#/parcours">Voir mon parcours</a>
+          ? 'Tu as fait toutes les activités du stand, bravo ! Tu peux terminer ton parcours.'
+          : n >= min
+            ? `Tu as fait ${pluriel(n, 'activité')} : tu peux terminer ton parcours quand tu veux, ou continuer avec d'autres activités si tu en as envie.`
+            : `Encore ${pluriel(min - n, 'activité')} au choix et tu pourras terminer ton parcours.`}</p>
+        <a class="btn btn-or btn-bloc" href="#/scanner">Scanner une autre activité</a>
+        <a class="btn btn-ligne btn-bloc" href="#/parcours">${n >= min ? 'Voir les activités ou terminer' : 'Voir les activités'}</a>
       </section>`, { mat: v.matricule });
   }
 
   async function ecranParcours() {
     const v = await moi();
     if (!v) return aller('');
-    if (v.role) return aller('verdict');
+    if (v.niveau) return aller('fin');
     const faites = new Set(await db.scans(v.id));
-    const n = C.activites.filter(a => faites.has(a.id)).length, total = C.activites.length;
-    const peut = n >= Math.min(C.minActivites, total);
+    const n = C.activites.filter(a => faites.has(a.id)).length, total = C.activites.length, min = minimum();
+    const peut = n >= min;
     cadre(`
       <section class="stack">
         <p class="label">Dossier de ${esc(v.prenom)}</p>
-        <h1>Ton parcours</h1>
-        <div class="progression" aria-label="${n} activités sur ${total}">
-          <div class="barre"><i style="width:${total ? Math.round(n / total * 100) : 0}%"></i></div>
-          <span class="compteur">${n} / ${total}</span>
+        <h1>Les activités du stand</h1>
+      </section>
+
+      <section class="panneau libre">
+        <h2>Tu es libre !</h2>
+        <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Pas besoin de tout faire : il en faut <b>au moins ${min}</b> pour terminer ton parcours. Plus tu en fais, plus ton niveau monte.</p>
+        <div class="jalons" aria-label="${n} activités validées sur ${min} minimum">
+          ${Array.from({ length: min }, (_, i) => `<span class="jalon ${i < n ? 'ok' : ''}" aria-hidden="true">${i < n ? '✓' : i + 1}</span>`).join('')}
+          <span class="small ${peut ? '' : 'muted'}" style="margin-left:4px">${peut ? `<b>${pluriel(n, 'activité')} validée${n > 1 ? 's' : ''}</b> · tu peux terminer` : `Encore ${pluriel(min - n, 'activité')}`}</span>
         </div>
       </section>
 
       <section class="dossier">
-        <div class="dossier-tete"><span class="label">Activités</span><span class="registre muted">#${esc(v.matricule)}</span></div>
+        <div class="dossier-tete"><span class="label">${pluriel(total, 'activité')}</span><span class="registre muted">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
         <ul class="activites">
           ${C.activites.map(a => `<li><div class="stack-sm" style="gap:2px;min-width:0"><span class="nom">${esc(a.nom)}</span><span class="muted small">${esc(a.description)}</span></div>
-            ${faites.has(a.id) ? '<span class="pastille ok">Validé</span>' : '<span class="pastille">À faire</span>'}</li>`).join('')}
+            ${faites.has(a.id) ? '<span class="pastille ok">Validé</span>' : '<span class="pastille">À découvrir</span>'}</li>`).join('')}
         </ul>
-      </section>
-
-      <section class="panneau">
-        <p class="label">Comment valider une activité</p>
-        <p class="muted small">Ouvre l'appareil photo de ton téléphone, vise le QR code affiché à l'activité et touche le lien qui apparaît. Le tampon « Validé » confirme qu'elle compte.</p>
       </section>
 
       <section class="stack" id="fin">
         ${peut
-          ? `<button class="btn btn-or btn-bloc" id="terminer">Terminer mon parcours</button>
-             <p class="aide" style="text-align:center">Tu pourras encore faire d'autres activités avant, plus il y en a, plus ton verdict est juste.</p>`
-          : `<button class="btn btn-or btn-bloc" disabled>Terminer mon parcours</button>
-             <p class="aide" style="text-align:center">Valide au moins ${Math.min(C.minActivites, total)} activités pour recevoir ton verdict.</p>`}
-      </section>`, { mat: v.matricule });
+          ? `<button class="btn btn-ligne btn-bloc" id="terminer">Terminer mon parcours</button>
+             <p class="aide" style="text-align:center">Tu peux encore faire d'autres activités avant, c'est toi qui décides.</p>`
+          : `<button class="btn btn-ligne btn-bloc" disabled>Terminer mon parcours</button>
+             <p class="aide" style="text-align:center">Valide encore ${pluriel(min - n, 'activité')} pour pouvoir terminer.</p>`}
+      </section>
+
+      <div class="barre-action"><a class="btn btn-or btn-bloc btn-scan" href="#/scanner"><span class="ico-scan" aria-hidden="true"></span>Scanner un QR code</a></div>`, { mat: v.matricule });
+    document.body.classList.add('avec-action');
 
     const t = document.getElementById('terminer');
     if (t) t.onclick = () => {
       document.getElementById('fin').innerHTML = `
         <div class="confirm">
-          <p><b>Rendre ton verdict maintenant ?</b><br><span class="muted small">Les activités que tu n'as pas faites ne compteront plus.</span></p>
-          <div class="row"><button class="btn btn-or" id="oui">Oui, mon verdict</button><button class="btn btn-discret" id="non">Pas encore</button></div>
+          <p><b>Terminer ton parcours maintenant ?</b><br><span class="muted small">Tu ne pourras plus valider d'activité ensuite.</span></p>
+          <div class="row"><button class="btn btn-or" id="oui">Oui, j'ai fini</button><button class="btn btn-discret" id="non">Pas encore</button></div>
         </div>`;
+      document.getElementById('fin').scrollIntoView({ block: 'center', behavior: 'smooth' });
       document.getElementById('non').onclick = ecranParcours;
       document.getElementById('oui').onclick = async e => {
         e.target.disabled = true;
         try {
-          const r = calculerRole([...faites]);
-          await db.maj(v.id, { role: r.id, termine_at: new Date().toISOString() });
+          const nb = (await db.scans(v.id)).filter(activite).length;
+          await db.maj(v.id, { niveau: niveauPour(nb).id, termine_at: new Date().toISOString() });
           store.set('forcats.anim', '1', sessionStorage);
-          aller('verdict');
+          aller('fin');
         } catch (e2) { panne(e2); }
       };
     };
-
-    nettoyage = db.suivre(async () => {
-      const f2 = await db.scans(v.id);
-      if (f2.length !== faites.size) ecranParcours();
-    });
   }
 
-  async function ecranVerdict() {
+  async function ecranScanner() {
     const v = await moi();
     if (!v) return aller('');
-    if (!v.role) return aller('parcours');
-    const r = role(v.role) || { nom: v.role, description: '' };
+    if (v.niveau) return aller('fin');
+    cadre(`
+      <section class="scanner" aria-label="Scanner">
+        <video id="video" playsinline muted autoplay></video>
+        <div class="viseur" aria-hidden="true"></div>
+        <p class="scanner-msg" id="msg" role="status">Ouverture de la caméra…</p>
+        <a class="btn btn-or scanner-fermer" href="#/parcours">Annuler</a>
+      </section>`, { mat: v.matricule });
+
+    const video = document.getElementById('video'), msg = document.getElementById('msg');
+    let flux = null, actif = true, minuteur = null;
+    const arreter = () => { actif = false; clearTimeout(minuteur); if (flux) flux.getTracks().forEach(t => t.stop()); };
+    nettoyage = arreter;
+
+    /* Extrait l'id d'activité d'un QR (URL ".../#/activite/<id>" ou id seul). */
+    const lireId = texte => { const m = /#\/activite\/([^/?#\s]+)/.exec(texte); return m ? decodeURIComponent(m[1]) : texte.trim(); };
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      msg.innerHTML = "Ton navigateur ne permet pas d'utiliser la caméra ici. Scanne le QR code avec l'appareil photo de ton téléphone, ça marche aussi.";
+      return;
+    }
+    try {
+      flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    } catch (e) {
+      console.error(e);
+      msg.innerHTML = "La caméra est bloquée. Autorise l'accès à la caméra pour ce site (réglages du navigateur), ou scanne le QR code avec l'appareil photo de ton téléphone.";
+      return;
+    }
+    if (!actif) return arreter(); // l'utilisateur a quitté l'écran pendant l'autorisation
+    video.srcObject = flux;
+    try { await video.play(); } catch { }
+    msg.textContent = "Vise le QR code de l'activité";
+
+    const detecteur = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+    const toile = document.createElement('canvas'), ctx = toile.getContext('2d', { willReadFrequently: true });
+    let dernierInconnu = '';
+    async function lire() {
+      if (!actif) return;
+      let texte = null;
+      try {
+        if (video.readyState >= 2 && video.videoWidth) {
+          if (detecteur) {
+            const r = await detecteur.detect(video); texte = r[0] && r[0].rawValue;
+          } else if (window.jsQR) {
+            const k = Math.min(1, 640 / video.videoWidth);
+            toile.width = Math.round(video.videoWidth * k); toile.height = Math.round(video.videoHeight * k);
+            ctx.drawImage(video, 0, 0, toile.width, toile.height);
+            const r = window.jsQR(ctx.getImageData(0, 0, toile.width, toile.height).data, toile.width, toile.height, { inversionAttempts: 'dontInvert' });
+            texte = r && r.data;
+          }
+        }
+      } catch (e) { console.error(e); }
+      if (texte && actif) {
+        const id = lireId(texte);
+        if (activite(id)) {
+          if (navigator.vibrate) navigator.vibrate(80);
+          arreter();
+          return aller('activite/' + id);
+        }
+        if (texte !== dernierInconnu) { dernierInconnu = texte; msg.textContent = "Ce QR code n'est pas une activité du stand."; }
+      }
+      minuteur = setTimeout(lire, 150);
+    }
+    lire();
+  }
+
+  async function ecranFin() {
+    const v = await moi();
+    if (!v) return aller('');
+    if (!v.niveau) return aller('parcours');
     const faites = (await db.scans(v.id)).map(activite).filter(Boolean);
+    const nv = niveau(v.niveau) || niveauPour(faites.length);
     const anim = store.get('forcats.anim', sessionStorage); store.set('forcats.anim', null, sessionStorage);
     cadre(`
       <section class="stack" style="text-align:center">
-        <p class="label">Verdict rendu</p>
+        <p class="label">Parcours terminé</p>
         <h1 class="display-lg">${esc(nomComplet(v))}</h1>
         <p class="registre muted">MATRICULE #${esc(v.matricule)}</p>
       </section>
-      <section class="dossier" style="align-items:center;text-align:center">
-        <p class="muted small">À l'île Nou, tu aurais été…</p>
-        <div class="tampon grand ${anim ? 'anim' : ''}">${esc(r.nom)}</div>
-        <p>${esc(r.description)}</p>
+      <section class="panneau sortie">
+        <span class="fleche" aria-hidden="true">➜</span>
+        <div class="stack-sm">
+          <p class="label">Dernière étape</p>
+          <h2>Direction la porte arrière</h2>
+          <p>${esc(C.messageFin)}</p>
+          <p class="muted small">Donne ton matricule <span class="registre" style="color:var(--gold-ink)">#${esc(v.matricule)}</span> à l'équipe.</p>
+        </div>
       </section>
-      <section class="panneau">
-        <p class="label">Dernière étape</p>
-        <h2>Présente-toi à la sortie</h2>
-        <p class="muted small">Donne ton matricule <span class="registre" style="color:var(--gold-ink)">#${esc(v.matricule)}</span> à l'équipe : elle te remet ta carte de forçat avec l'autocollant de ton rôle.</p>
+      <section class="dossier" style="align-items:center;text-align:center">
+        <p class="muted small">Avec ${pluriel(faites.length, 'activité')}, ton niveau au bagne :</p>
+        <div class="tampon grand ${anim ? 'anim' : ''}">${esc(nv.titre)}</div>
+        <h2>${esc(nv.nom)}</h2>
+        <p>${esc(nv.description)}</p>
       </section>
       <section class="dossier">
         <div class="dossier-tete"><span class="label">Activités validées</span><span class="registre muted">${faites.length} / ${C.activites.length}</span></div>
@@ -370,7 +528,7 @@
     cadre(`
       <form class="dossier" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
         <h1>Espace équipe</h1>
-        <p class="muted small">Réservé à l'équipe du forum : impression des cartes, sortie et QR codes.</p>
+        <p class="muted small">Réservé à l'équipe du forum : impression des cartes et QR codes.</p>
         <div class="champ"><label for="code">Code d'accès</label><input type="password" id="code" inputmode="numeric" autocomplete="off"></div>
         <p class="erreur" id="err" hidden>Code incorrect.</p>
         <button class="btn btn-or" type="submit">Entrer</button>
@@ -382,14 +540,30 @@
     });
   }
 
+  /* Petit « ding » quand une inscription arrive (le navigateur l'autorise après un premier clic). */
+  let audio = null;
+  function bip() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+      const t = audio.currentTime;
+      [880, 1320].forEach((f, i) => {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = f; g.gain.setValueAtTime(0.0001, t + i * 0.15);
+        g.gain.exponentialRampToValueAtTime(0.25, t + i * 0.15 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.15 + 0.35);
+        o.connect(g).connect(audio.destination); o.start(t + i * 0.15); o.stop(t + i * 0.15 + 0.4);
+      });
+    } catch { /* pas de son, tant pis */ }
+  }
+
   async function ecranEquipe(onglet = 'impression') {
     if (store.get(K_EQUIPE, sessionStorage) !== '1') return ecranCode(onglet);
-    if (!['impression', 'sortie', 'qr'].includes(onglet)) onglet = 'impression';
+    if (!['impression', 'qr'].includes(onglet)) onglet = 'impression';
 
     cadre(`
       <nav class="onglets no-print" aria-label="Postes">
         <a href="#/equipe/impression" ${onglet === 'impression' ? 'aria-current="page"' : ''}>Impression<span class="nb" id="nb-imp"></span></a>
-        <a href="#/equipe/sortie" ${onglet === 'sortie' ? 'aria-current="page"' : ''}>Sortie<span class="nb" id="nb-sor"></span></a>
         <a href="#/equipe/qr" ${onglet === 'qr' ? 'aria-current="page"' : ''}>QR codes</a>
       </nav>
       <div id="zone"></div>`, { equipe: true });
@@ -397,92 +571,67 @@
 
     if (onglet === 'qr') return posteQR(zone);
 
-    let filtre = '';
     let voirTout = false;
-    zone.innerHTML = onglet === 'impression'
-      ? `<div class="stack">
-           <div class="stats" id="stats"></div>
-           <div class="row" style="justify-content:space-between">
-             <div><h1>À imprimer</h1><p class="muted small">Les nouvelles inscriptions arrivent ici en direct. Touche un champ pour le copier, colle-le dans Canva, puis marque la carte comme imprimée.</p></div>
-             <button class="btn btn-discret btn-sm" id="tout">Voir aussi les imprimées</button>
-           </div>
-           <div class="grille" id="liste"></div></div>`
-      : `<div class="stack">
-           <div class="stats" id="stats"></div>
-           <h1>Sortie</h1>
-           <p class="muted small">Demande le matricule au visiteur, colle l'autocollant de son rôle sur sa carte, puis marque la carte comme remise.</p>
-           <div class="champ" style="max-width:420px"><label for="cherche">Matricule ou nom</label><input type="search" id="cherche" placeholder="ex. 1864 ou Dupont" autocomplete="off"></div>
-           <div class="grille" id="liste"></div></div>`;
+    zone.innerHTML = `<div class="stack">
+        <div class="stats" id="stats"></div>
+        <div class="row" style="justify-content:space-between">
+          <div><h1>À imprimer</h1><p class="muted small">Les inscriptions arrivent ici en direct, dans l'ordre d'arrivée (la plus ancienne en premier). Copie les infos et la photo dans Canva, imprime, puis « Marquer imprimée ».</p></div>
+          <button class="btn btn-discret btn-sm" id="tout">Voir aussi les imprimées</button>
+        </div>
+        <div class="grille" id="liste"></div></div>`;
 
     const liste = document.getElementById('liste');
-    const cherche = document.getElementById('cherche');
-    if (cherche) cherche.addEventListener('input', () => { filtre = cherche.value; dessiner(); });
     const tout = document.getElementById('tout');
-    if (tout) tout.onclick = () => { voirTout = !voirTout; tout.textContent = voirTout ? 'Masquer les imprimées' : 'Voir aussi les imprimées'; dessiner(); };
+    tout.onclick = () => { voirTout = !voirTout; tout.textContent = voirTout ? 'Masquer les imprimées' : 'Voir aussi les imprimées'; dessiner(); };
 
-    let donnees = [];
+    let donnees = [], connus = null;
     async function charger() {
-      try { donnees = await db.tous(); dessiner(); }
-      catch (e) { console.error(e); liste.innerHTML = '<p class="erreur">Connexion à la base impossible. Vérifie le réseau.</p>'; }
+      try {
+        donnees = await db.tous();
+        const nouveaux = connus ? donnees.filter(v => !connus.has(v.id)) : [];
+        connus = new Set(donnees.map(v => v.id));
+        if (nouveaux.length) { bip(); toast(nouveaux.length > 1 ? `${nouveaux.length} nouvelles inscriptions` : `Nouvelle inscription : ${nouveaux[0].prenom} #${nouveaux[0].matricule}`); }
+        dessiner();
+      } catch (e) { console.error(e); liste.innerHTML = '<p class="erreur">Connexion à la base impossible. Vérifie le réseau.</p>'; }
     }
 
     function dessiner() {
       const aImprimer = donnees.filter(v => !v.imprime);
-      const enAttente = donnees.filter(v => v.role && !v.remis);
       document.getElementById('nb-imp').textContent = aImprimer.length || '';
-      document.getElementById('nb-sor').textContent = enAttente.length || '';
+      document.title = aImprimer.length ? `(${aImprimer.length}) ${TITRE}` : TITRE;
       document.getElementById('stats').innerHTML = `
         <div class="stat"><span class="label">Inscrits</span><b>${donnees.length}</b></div>
         <div class="stat"><span class="label">À imprimer</span><b>${aImprimer.length}</b></div>
-        <div class="stat"><span class="label">Verdict rendu</span><b>${donnees.filter(v => v.role).length}</b></div>
-        <div class="stat"><span class="label">Cartes remises</span><b>${donnees.filter(v => v.remis).length}</b></div>`;
+        <div class="stat"><span class="label">En visite</span><b>${donnees.filter(v => !v.niveau).length}</b></div>
+        <div class="stat"><span class="label">Parcours terminés</span><b>${donnees.filter(v => v.niveau).length}</b></div>`;
 
-      let items;
-      if (onglet === 'impression') {
-        items = (voirTout ? donnees : aImprimer).slice().sort((a, b) => (a.imprime - b.imprime) || a.created_at.localeCompare(b.created_at));
-        liste.innerHTML = items.length ? items.map(ficheImpression).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
-      } else {
-        const q = norm(filtre);
-        items = donnees.filter(v => !q || v.matricule.includes(q) || norm(v.nom).includes(q) || norm(v.prenom).includes(q));
-        const rang = v => v.role && !v.remis ? 0 : !v.role ? 1 : 2;
-        items.sort((a, b) => rang(a) - rang(b) || (b.termine_at || b.created_at).localeCompare(a.termine_at || a.created_at));
-        liste.innerHTML = items.length ? items.map(ficheSortie).join('') : `<p class="vide">${q ? 'Aucun visiteur ne correspond.' : 'Personne ne s\'est encore inscrit.'}</p>`;
-      }
+      const items = (voirTout ? donnees : aImprimer).slice().sort((a, b) => (a.imprime - b.imprime) || a.created_at.localeCompare(b.created_at));
+      liste.innerHTML = items.length ? items.map((v, i) => fiche(v, voirTout ? null : i + 1)).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
     }
 
-    function ficheImpression(v) {
-      return `<article class="dossier fiche">
-        <div class="dossier-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span><span class="registre muted">${heure(v.created_at)}</span></div>
-        <div class="stack-sm">
-          <div><span class="label" style="color:var(--ink-muted)">Prénom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.prenom)}" title="Copier le prénom">${esc(v.prenom)}</button></div></div>
-          <div><span class="label" style="color:var(--ink-muted)">Nom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.nom)}" title="Copier le nom">${esc(v.nom)}</button></div></div>
-        </div>
-        <div class="row">
-          <button class="btn btn-discret btn-sm" data-copie="${esc(`${v.prenom} ${v.nom}\nMatricule #${v.matricule}`)}">Tout copier</button>
-          ${v.imprime
-            ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">Imprimée · annuler</button>`
-            : `<button class="btn btn-or btn-sm" data-act="imprime" data-id="${v.id}" data-val="1">Marquer imprimée</button>`}
-        </div>
-      </article>`;
-    }
-
-    function ficheSortie(v) {
-      const r = v.role ? role(v.role) : null;
+    function fiche(v, rang) {
       const nb = v.scans.filter(activite).length;
+      const nv = v.niveau ? niveau(v.niveau) : null;
+      const fichierPhoto = `${v.matricule}-${norm(v.prenom)}-${norm(v.nom)}.jpg`.replace(/[^a-z0-9.-]+/g, '-');
       return `<article class="dossier fiche">
-        <div class="dossier-tete"><span class="fiche-mat">#${esc(v.matricule)}</span>
-          ${v.remis ? '<span class="pastille ok">Remise</span>' : v.role ? '<span class="pastille or">À remettre</span>' : '<span class="pastille">En visite</span>'}</div>
-        <div class="fiche-nom">${esc(nomComplet(v))}</div>
-        ${r ? `<div class="role-sortie"><span class="rond" aria-hidden="true">${esc(r.nom.charAt(0))}</span>
-                 <div><div class="display-md">${esc(r.nom)}</div><div class="label">${esc(r.autocollant || '')}</div></div></div>`
-            : `<p class="muted small">Pas encore de verdict · ${nb} activité${nb > 1 ? 's' : ''} validée${nb > 1 ? 's' : ''}.</p>`}
-        <p class="muted small">${v.scans.map(activite).filter(Boolean).map(a => esc(a.nom)).join(' · ') || 'Aucune activité'}</p>
-        <div class="row">
-          ${!v.imprime ? '<span class="pastille ko">Carte pas imprimée</span>' : ''}
-          ${!v.role ? `<button class="btn btn-ligne btn-sm" data-act="verdict" data-id="${v.id}">Rendre le verdict</button>` : ''}
-          ${v.role && !v.remis ? `<button class="btn btn-or btn-sm" data-act="remis" data-id="${v.id}" data-val="1">Carte remise</button>` : ''}
-          ${v.remis ? `<button class="btn btn-discret btn-sm" data-act="remis" data-id="${v.id}" data-val="0">Annuler la remise</button>` : ''}
+        <div class="dossier-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span>
+          <span class="registre muted">${rang ? `${rang}<sup>${rang === 1 ? 'er' : 'e'}</sup> · ` : ''}${heure(v.created_at)}</span></div>
+        <div class="fiche-corps">
+          ${v.photo ? `<img class="fiche-photo" src="${esc(v.photo)}" alt="Photo de ${esc(v.prenom)}" loading="lazy">` : '<div class="fiche-photo vide-photo">Pas de photo</div>'}
+          <div class="stack-sm" style="min-width:0">
+            <div><span class="label" style="color:var(--ink-muted)">Prénom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.prenom)}" title="Copier le prénom">${esc(v.prenom)}</button></div></div>
+            <div><span class="label" style="color:var(--ink-muted)">Nom</span><div class="fiche-nom"><button class="copiable" data-copie="${esc(v.nom)}" title="Copier le nom">${esc(v.nom)}</button></div></div>
+            ${nv ? `<span class="pastille or">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
+          </div>
         </div>
+        <div class="row">
+          ${v.photo ? `<button class="btn btn-discret btn-sm" data-act="photo-copie" data-id="${v.id}">Copier la photo</button>
+          <button class="btn btn-discret btn-sm" data-act="photo-dl" data-id="${v.id}" data-nom="${esc(fichierPhoto)}">Télécharger</button>` : ''}
+          <button class="btn btn-discret btn-sm" data-copie="${esc(`${v.prenom} ${v.nom}\nMatricule #${v.matricule}`)}">Copier le texte</button>
+        </div>
+        ${v.imprime
+          ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · annuler</button>`
+          : `<button class="btn btn-or" data-act="imprime" data-id="${v.id}" data-val="1">Carte imprimée</button>`}
       </article>`;
     }
 
@@ -492,11 +641,12 @@
       const b = e.target.closest('[data-act]');
       if (!b) return;
       const v = donnees.find(x => x.id === b.dataset.id); if (!v) return;
+      if (b.dataset.act === 'photo-copie') return copierPhoto(v.photo);
+      if (b.dataset.act === 'photo-dl') return telechargerPhoto(v.photo, b.dataset.nom);
       b.disabled = true;
       try {
-        if (b.dataset.act === 'imprime') { await db.maj(v.id, { imprime: b.dataset.val === '1' }); toast(b.dataset.val === '1' ? `Carte #${v.matricule} imprimée` : 'Annulé'); }
-        if (b.dataset.act === 'remis') { await db.maj(v.id, { remis: b.dataset.val === '1' }); toast(b.dataset.val === '1' ? `Carte #${v.matricule} remise` : 'Annulé'); }
-        if (b.dataset.act === 'verdict') { const r = calculerRole(v.scans); await db.maj(v.id, { role: r.id, termine_at: new Date().toISOString() }); toast(`Verdict : ${r.nom}`); }
+        await db.maj(v.id, { imprime: b.dataset.val === '1' });
+        toast(b.dataset.val === '1' ? `Carte #${v.matricule} imprimée` : 'Annulé');
         await charger();
       } catch (err) { console.error(err); b.disabled = false; toast('Action impossible, vérifie le réseau'); }
     });
@@ -513,15 +663,15 @@
       const q = window.qrcode(0, 'M'); q.addData(texte); q.make();
       return q.createSvgTag(6, 2);
     };
-    const carte = (titre, sous, route) => `<article class="qr-carte">${qr(lien(route))}<h3>${esc(titre)}</h3><p class="small">${esc(sous)}</p><p class="registre">${esc(lien(route))}</p></article>`;
+    const carte = (titre, sous, route, desc = '') => `<article class="qr-carte">${qr(lien(route))}<h3>${esc(titre)}</h3>${desc ? `<p class="small">${esc(desc)}</p>` : ''}<p class="small"><b>${esc(sous)}</b></p><p class="registre">${esc(lien(route))}</p></article>`;
     zone.innerHTML = `
       <div class="stack">
         <h1>QR codes</h1>
         ${!C.baseUrl ? `<p class="alerte no-print">Ces QR codes pointent vers <span class="registre">${esc(base)}</span>. Avant d'imprimer, renseigne l'adresse Netlify dans <span class="registre">baseUrl</span> (config.js).</p>` : ''}
-        <p class="muted small no-print">Imprime cette page (Ctrl/Cmd + P) depuis le site déployé : un QR pour l'entrée, un par activité.</p>
+        <p class="muted small no-print">Imprime cette page (Ctrl/Cmd + P) depuis le site déployé : un QR pour l'entrée (à scanner avec l'appareil photo), un par activité (à scanner avec le bouton « Scanner » de l'appli).</p>
         <div class="grille">
-          ${carte('Entrée', 'Scanne pour ouvrir ton dossier', '')}
-          ${C.activites.map(a => carte(a.nom, 'Scanne pour valider l\'activité', 'activite/' + a.id)).join('')}
+          ${carte('Entrée', "Scanne avec l'appareil photo de ton téléphone pour t'inscrire", '')}
+          ${C.activites.map(a => carte(a.nom, "Scanne avec le bouton « Scanner » de l'appli", 'activite/' + a.id, a.description)).join('')}
         </div>
       </div>`;
   }
@@ -535,7 +685,8 @@
       if (page !== 'equipe') chargement();
       if (page === 'activite') return await ecranActivite(arg);
       if (page === 'parcours') return await ecranParcours();
-      if (page === 'verdict') return await ecranVerdict();
+      if (page === 'scanner') return await ecranScanner();
+      if (page === 'fin' || page === 'verdict') return await ecranFin();
       if (page === 'retrouver') return await ecranRetrouver();
       if (page === 'equipe') return await ecranEquipe(arg);
       return await ecranAccueil();
