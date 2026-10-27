@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>L'Évasion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Andika:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Décor plein écran (deux calques pour le fondu) -->
+<div class="decor" id="decor-a" aria-hidden="true"></div>
+<div class="decor" id="decor-b" aria-hidden="true"></div>
+
+<!-- Bouton accueil (coin haut gauche) -->
+<button class="btn-rond btn-retour" id="btn-retour" type="button" aria-label="Retour à l'accueil" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5L12 4l8.5 7.5M6 9.8V20h4.5v-5.5h3V20H18V9.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<!-- Bouton son (coin haut droit) -->
+<button class="btn-rond btn-son" id="btn-son" type="button" aria-label="Son" aria-pressed="true">
+  <svg class="son-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+  <svg class="son-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+</button>
+
+<!-- Scène : zone de 1536 × 1024 mise à l'échelle de l'écran -->
+<main class="scene" id="scene">
+
+  <!-- ÉCRAN 0 : accueil -->
+  <section class="ecran ecran-accueil" id="ecran-accueil" hidden>
+    <div class="bandeau bandeau-grand"><span>L'Évasion</span></div>
+    <div class="parchemin parchemin-accueil">
+      <p class="surtitre">Bagne de l'île Nou · Nouvelle-Calédonie</p>
+      <h1 class="titre-pinceau">Choisis ton histoire</h1>
+      <ul class="liste-histoires" id="liste-histoires"></ul>
+      <button class="btn-pinceau" id="btn-hasard" type="button">Une histoire au hasard <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
+
+  <!-- ÉCRAN 1 : intro de l'histoire -->
+  <section class="ecran ecran-intro" id="ecran-intro" hidden>
+    <div class="bandeau bandeau-grand"><span>L'Évasion</span></div>
+    <div class="parchemin parchemin-intro">
+      <p class="surtitre">Bagne de l'île Nou · Nouvelle-Calédonie</p>
+      <h1 class="titre-pinceau" id="intro-titre"></h1>
+      <p class="texte" id="intro-texte"></p>
+      <div class="rangee-ctas">
+        <button class="btn-cta" type="button" aria-expanded="false" aria-controls="regles"><span aria-hidden="true">❓</span> Comment jouer ?</button>
+      </div>
+      <ul class="panneau regles" id="regles" hidden>
+        <li><span aria-hidden="true">⚠️</span> Un mauvais choix, et c'est le retour au bagne.</li>
+        <li><span aria-hidden="true">🎒</span> Tes préparatifs vont dans ton sac.</li>
+        <li><span aria-hidden="true">🪢</span> Une icône sur une carte = l'objet qu'il te faut.</li>
+        <li><span aria-hidden="true">💬</span> Touche un mot souligné pour l'expliquer.</li>
+      </ul>
+      <button class="btn-pinceau" id="btn-commencer" type="button">Commencer l'évasion <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
+
+  <!-- ÉCRAN 2 : une étape -->
+  <section class="ecran ecran-etape" id="ecran-etape" hidden>
+    <div class="entete">
+      <ol class="progression" id="progression" aria-label="Progression"></ol>
+      <div class="bandeau"><span id="etape-phase"></span></div>
+    </div>
+
+    <div class="colonne-recit">
+      <div class="parchemin parchemin-recit">
+        <h2 class="titre-pinceau" id="etape-titre"></h2>
+        <p class="texte" id="etape-texte"></p>
+        <p class="question" id="etape-question"></p>
+        <svg class="soulignement" viewBox="0 0 200 14" preserveAspectRatio="none" aria-hidden="true"><path d="M3 9 C 50 3, 120 2, 197 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>
+      </div>
+
+      <div class="sac" id="sac">
+        <p class="sac-titre">Ton sac</p>
+        <ul class="sac-liste" id="sac-liste"></ul>
+      </div>
+    </div>
+
+    <div class="cartes" id="cartes"></div>
+  </section>
+
+  <!-- ÉCRAN 3 : la fin -->
+  <section class="ecran ecran-fin" id="ecran-fin" hidden>
+    <div class="parchemin parchemin-fin">
+      <p class="surtitre" id="fin-surtitre"></p>
+      <p class="nouvelle-fin" id="fin-nouvelle" hidden>★ Nouvelle fin découverte !</p>
+      <h2 class="titre-pinceau" id="fin-titre"></h2>
+      <p class="texte" id="fin-texte"></p>
+      <p class="collection" id="fin-collection"></p>
+
+      <!-- Le reste s'ouvre à la demande -->
+      <div class="rangee-ctas">
+        <button class="btn-cta" type="button" aria-expanded="false" aria-controls="panneau-vrai"><span aria-hidden="true">📜</span> L'histoire vraie</button>
+        <button class="btn-cta" type="button" aria-expanded="false" aria-controls="panneau-parcours"><span aria-hidden="true">🧭</span> Mon parcours</button>
+      </div>
+      <div class="panneau vrai" id="panneau-vrai" hidden>
+        <p class="vrai-texte" id="fin-vrai"></p>
+      </div>
+      <div class="panneau parcours" id="panneau-parcours" hidden>
+        <p class="score" id="fin-score"></p>
+        <ol class="chemin" id="fin-chemin" aria-label="Ton chemin"></ol>
+      </div>
+      <div class="rangee-boutons">
+        <button class="btn-pinceau" id="btn-reessayer" type="button">Réessayer</button>
+        <button class="btn-pinceau" id="btn-rejouer" type="button">Autre histoire <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Conséquence d'un choix -->
+<div class="voile" id="popup-consequence" hidden>
+  <div class="scene-popup">
+    <section class="parchemin parchemin-popup" role="dialog" aria-modal="true" aria-labelledby="conseq-titre" aria-describedby="conseq-texte">
+      <h2 class="titre-pinceau" id="conseq-titre"></h2>
+      <p class="texte" id="conseq-texte"></p>
+      <p class="gain" id="conseq-gain" hidden></p>
+      <p class="explication" id="conseq-explication" hidden></p>
+      <button class="btn-pinceau" id="btn-continuer" type="button"></button>
+    </section>
+  </div>
+</div>
+
+<!-- Confirmation pour quitter -->
+<div class="voile" id="popup-quitter" hidden>
+  <div class="scene-popup">
+    <section class="parchemin parchemin-popup petit" role="dialog" aria-modal="true" aria-labelledby="quitter-titre">
+      <h2 class="titre-pinceau" id="quitter-titre">Retourner à l'accueil ?</h2>
+      <p class="texte">Ta progression dans cette histoire sera perdue.</p>
+      <div class="rangee-boutons">
+        <button class="btn-pinceau" id="btn-rester" type="button">Continuer</button>
+        <button class="btn-pinceau secondaire" id="btn-quitter" type="button">Quitter</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Définition d'un mot du glossaire -->
+<div class="bulle" id="bulle" role="tooltip" hidden></div>
+
+<!-- Annonces pour les lecteurs d'écran -->
+<p class="lecteur-seul" id="annonce" aria-live="polite"></p>
+
+<!-- Tablette en portrait -->
+<div class="tourner" aria-hidden="true"><p>Tourne la tablette en mode paysage pour jouer.</p></div>
+
+<script src="js/histoires.js"></script>
+<script src="js/donnees.js"></script>
+<script src="js/son.js"></script>
+<script src="js/jeu.js"></script>
+</body>
+</html>

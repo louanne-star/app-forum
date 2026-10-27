@@ -1,0 +1,105 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Le Pendu du Bagne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=EB+Garamond:ital,wght@0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+
+
+<!-- Décor plein écran -->
+<div class="decor" aria-hidden="true"></div>
+
+<main class="jeu" id="jeu">
+
+  <!-- En-tête : titre + sous-titre -->
+  <header class="entete">
+    <h1 class="titre"><img src="assets/panneau-titre.webp" alt="Le Pendu du Bagne — Nouvelle-Calédonie"></h1>
+    <p class="sous-titre"><span>Trouvez le mot avant que la guillotine ne tombe…</span></p>
+  </header>
+
+  <!-- Compteur de mots trouvés -->
+  <div class="compteur" aria-live="polite">
+    <span>Mots trouvés : <b id="nb-trouves">0</b>/<span id="nb-total">10</span></span>
+  </div>
+
+  <!-- Guillotine : la lame descend d'un cran par erreur -->
+  <div class="guillotine" id="guillotine" style="--e:0" role="img" aria-label="Erreurs : 0 sur 7">
+    <div class="glissiere">
+      <div class="lame">
+        <div class="corde"></div>
+        <img src="assets/lame.webp" alt="">
+      </div>
+    </div>
+    <img class="structure" src="assets/guillotine.webp" alt="">
+    <ol class="graduation" id="graduation" aria-hidden="true"></ol>
+  </div>
+
+  <!-- Bas d'écran : mot + clavier -->
+  <div class="bas">
+    <div class="panneau-mot">
+      <div class="mot" id="mot" aria-live="polite"></div>
+    </div>
+    <div class="clavier" id="clavier"></div>
+  </div>
+
+  <!-- Boutons ronds : indice au-dessus de paramètres -->
+  <div class="boutons">
+    <button class="btn-rond btn-indice" id="btn-indice" type="button" aria-label="Utiliser un indice">
+      <img src="assets/bouton-indice.webp" alt="">
+      <span class="badge" id="nb-indices">2</span>
+    </button>
+    <button class="btn-rond" id="btn-parametres" type="button" aria-label="Paramètres">
+      <img src="assets/bouton-parametres.webp" alt="">
+    </button>
+  </div>
+</main>
+
+<!-- Pop-up de victoire (après chaque mot trouvé) -->
+<div class="voile" id="popup-victoire" hidden>
+  <section class="parchemin" role="dialog" aria-modal="true" aria-labelledby="victoire-mot">
+    <p class="surtitre">Mot trouvé !</p>
+    <h2 class="grand-mot" id="victoire-mot"></h2>
+    <div class="filet" aria-hidden="true"></div>
+    <p class="definition" id="victoire-def"></p>
+    <button class="btn-plaque" id="btn-suivant" type="button">Mot suivant</button>
+  </section>
+</div>
+
+<!-- Écran de fin (provisoire : à remplacer par ta maquette) -->
+<div class="voile voile-fin" id="ecran-fin" hidden>
+  <section class="parchemin" role="dialog" aria-modal="true" aria-labelledby="fin-titre">
+    <p class="surtitre" id="fin-surtitre"></p>
+    <h2 class="grand-mot" id="fin-titre"></h2>
+    <div class="filet" aria-hidden="true"></div>
+    <p class="definition" id="fin-texte"></p>
+    <p class="score" id="fin-score"></p>
+    <button class="btn-plaque" id="btn-rejouer" type="button">Rejouer</button>
+  </section>
+</div>
+
+<!-- Paramètres -->
+<div class="voile" id="popup-parametres" hidden>
+  <section class="parchemin parchemin-reglages" role="dialog" aria-modal="true" aria-labelledby="reglages-titre">
+    <h2 class="grand-mot petit" id="reglages-titre">Paramètres</h2>
+    <div class="filet" aria-hidden="true"></div>
+    <div class="liste-reglages">
+      <button class="btn-plaque" id="btn-son" type="button">Sons : activés</button>
+      <button class="btn-plaque" id="btn-plein-ecran" type="button">Plein écran</button>
+      <button class="btn-plaque" id="btn-recommencer" type="button">Recommencer la partie</button>
+      <button class="btn-plaque" id="btn-fermer" type="button">Reprendre</button>
+    </div>
+  </section>
+</div>
+
+<!-- Message si la tablette est en portrait -->
+<div class="tourner" aria-hidden="true">
+  <p>Tournez la tablette en mode paysage pour jouer.</p>
+</div>
+
+<script src="js/mots.js"></script>
+<script src="js/jeu.js"></script>
+
+</body></html>
