@@ -6,6 +6,7 @@
      #/activite/<id>    validation d'une activité (cible des QR codes)
      #/fin              parcours terminé : niveau + sortie
      #/retrouver        retrouver son dossier (autre téléphone / navigateur)
+     #/reset            oublie le dossier de ce navigateur (tests)
      #/equipe[/impression|qr]   espace équipe (code d'accès)
      #/tablette[/<id>]  jeux numériques sur les tablettes du stand (code d'accès) */
 (() => {
@@ -288,8 +289,8 @@
     document.title = TITRE;
     app.innerHTML = `
       <header class="bandeau"><div class="bandeau-in">
-        <a class="marque" href="#/">Forçats<span>'</span>Nou</a>
-        ${mat ? `<span class="bandeau-mat">MATRICULE #${esc(mat)}</span>` : equipe ? '<span class="bandeau-mat">ESPACE ÉQUIPE</span>' : ''}
+        <a class="marque" href="#/">Forçats<i>’</i>Nou</a>
+        ${mat ? `<span class="bandeau-mat" aria-label="Matricule ${esc(mat)}">N° ${esc(mat)}</span>` : equipe ? '<span class="bandeau-mat">Espace équipe</span>' : ''}
       </div></header>
       ${DEMO ? `<div class="page" style="padding-block:12px 0"><p class="alerte"><b>Mode démo.</b> Les données restent dans ce navigateur. Renseigne Supabase dans <span class="registre">config.js</span> pour le forum.</p></div>` : ''}
       <main class="page">${contenu}</main>`;
@@ -298,37 +299,61 @@
   function chargement() { cadre('<p class="muted">Ouverture du dossier…</p>'); }
   function panne(e) {
     console.error(e);
-    cadre(`<section class="dossier"><h2>Connexion impossible</h2>
+    cadre(`<section class="feuille"><h2>Connexion impossible</h2>
       <p class="muted">Le serveur ne répond pas. Vérifie le réseau puis réessaie.</p>
-      <button class="btn btn-or" id="re">Réessayer</button></section>`);
+      <button class="btn btn-mer" id="re">Réessayer</button></section>`);
     document.getElementById('re').onclick = route;
   }
 
   /* ================= Écrans visiteur ================= */
+  const ICO_SCAN = '<svg class="ico-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 12h18"/></svg>';
+  const ICO_FLECHE = '<svg class="fleche" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20.5" stroke-width="1.25"/><path d="M12 22h20M25 15l7 7-7 7"/></svg>';
+  const VAGUES = `<svg class="vagues" viewBox="0 0 400 18" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 6${' q12.5 -6 25 0 t25 0'.repeat(8)}"/><path d="M0 14${' q12.5 -6 25 0 t25 0'.repeat(8)}"/></svg>`;
+  const GRAVURE = '<img class="gravure" src="img/gravure.png" alt="" width="620" height="552">';
+
+  /* Cachet de la poste : texte en couronne, mot au centre, petite ligne dessous. */
+  let nCachet = 0;
+  function cachet(couronne, centre, bas = '', classe = '') {
+    const id = 'cachet' + (++nCachet);
+    const taille = Math.min(34, Math.round(205 / Math.max(centre.length, 1)));
+    return `<svg class="cachet ${classe}" viewBox="0 0 200 200" aria-hidden="true">
+      <defs><path id="${id}" d="M100 100m-74 0a74 74 0 1 1 148 0a74 74 0 1 1-148 0"/></defs>
+      <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" stroke-width="3"/>
+      <circle cx="100" cy="100" r="89" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="100" cy="100" r="60" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text class="cachet-tour"><textPath href="#${id}" textLength="462" lengthAdjust="spacing">${esc(couronne.toUpperCase())}</textPath></text>
+      <text class="cachet-centre" x="100" y="${bas ? 104 : 100 + taille / 3}" text-anchor="middle" font-size="${taille}">${esc(centre)}</text>
+      ${bas ? `<text class="cachet-bas" x="100" y="132" text-anchor="middle">${esc(bas)}</text>` : ''}
+    </svg>`;
+  }
+
   async function ecranAccueil() {
     const v = await moi();
     if (v) return aller(v.niveau ? 'fin' : 'parcours');
     const attente = activite(store.get(K_ATTENTE, sessionStorage));
     cadre(`
-      <section class="stack">
+      <section class="stack hero">
         <p class="label">Pénitencier de l'île Nou</p>
-        <h1 class="display-xl">Ouvre ton dossier</h1>
-        <p class="muted">Bienvenue au bagne ! Inscris-toi pour recevoir ta carte matricule, puis découvre les activités du stand.</p>
+        <h1 class="display-xl">Ouvre ton <em>dossier</em></h1>
+        <div class="hero-image">
+          <p class="chapo">Bienvenue au bagne ! Inscris-toi pour recevoir ta carte matricule, puis découvre les activités du stand.</p>
+          ${GRAVURE}
+        </div>
       </section>
 
-      <section class="panneau" aria-labelledby="t-guide">
+      <section class="stack" aria-labelledby="t-guide">
         <h2 id="t-guide">Comment ça marche</h2>
         <ol class="etapes">
-          <li><span class="n">1</span><div><b>Inscris-toi</b><span class="muted small">Prénom, nom, photo et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
-          <li><span class="n">2</span><div><b>Fais les activités de ton choix</b><span class="muted small">Tu es libre ! Au moins ${minimum()}, dans l'ordre que tu veux. Scanne le QR code de chaque activité avec le bouton « Scanner » de l'appli.</span></div></li>
-          <li><span class="n">3</span><div><b>Termine ton parcours</b><span class="muted small">Découvre ton niveau, puis sors par la porte arrière récupérer ta carte matricule.</span></div></li>
+          <li><span class="n">1</span><div><b>Inscris-toi</b><span>Prénom, nom, photo et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
+          <li><span class="n">2</span><div><b>Fais les activités de ton choix</b><span>Tu es libre ! Au moins ${minimum()}, dans l'ordre que tu veux. Scanne le QR code de chaque activité avec le bouton « Scanner » de l'appli.</span></div></li>
+          <li><span class="n">3</span><div><b>Termine ton parcours</b><span>Découvre ton niveau, puis sors par la porte arrière récupérer ta carte matricule.</span></div></li>
         </ol>
       </section>
 
       ${attente ? `<p class="alerte">Inscris-toi d'abord : l'activité <b>${esc(attente.nom)}</b> sera validée juste après.</p>` : ''}
 
-      <form class="dossier" id="f" novalidate>
-        <div class="dossier-tete"><span class="label">Fiche d'entrée</span><span class="registre muted">N° ……</span></div>
+      <form class="feuille" id="f" novalidate>
+        <div class="feuille-tete"><span class="label">Fiche d'entrée</span><span class="registre muted">N° ……</span></div>
         <div class="champ"><label for="prenom">Prénom</label><input type="text" id="prenom" autocomplete="given-name" maxlength="60" required></div>
         <div class="champ"><label for="nom">Nom</label><input type="text" id="nom" autocomplete="family-name" maxlength="60" required></div>
         <div class="champ"><label for="matricule">Ton matricule (4 chiffres)</label>
@@ -340,8 +365,8 @@
           <div class="photo-zone">
             <div class="photo-cadre" id="apercu" aria-live="polite"><span class="photo-vide" aria-hidden="true"></span></div>
             <div class="stack-sm" style="flex:1;min-width:0">
-              <label class="btn btn-ligne btn-sm">Prendre une photo<input class="fichier" type="file" accept="image/*" capture="user" data-photo></label>
-              <label class="btn btn-discret btn-sm">Choisir dans ma galerie<input class="fichier" type="file" accept="image/*" data-photo></label>
+              <label class="btn btn-mer btn-sm">Prendre une photo<input class="fichier" type="file" accept="image/*" capture="user" data-photo></label>
+              <label class="btn btn-ligne btn-sm">Choisir dans ma galerie<input class="fichier" type="file" accept="image/*" data-photo></label>
               <span class="aide">De face, visage bien centré, sur un fond clair.</span>
             </div>
           </div>
@@ -349,7 +374,7 @@
 
         <label class="consent"><input type="checkbox" id="consent"><span>${esc(C.consentement)}</span></label>
         <p class="erreur" id="err" hidden></p>
-        <button class="btn btn-or btn-bloc" type="submit">Entrer au bagne</button>
+        <button class="btn btn-mer btn-bloc" type="submit">Entrer au bagne</button>
       </form>
       <p class="pied"><a href="#/retrouver">J'ai déjà un dossier</a></p>`);
 
@@ -404,11 +429,11 @@
     cadre(`
       <section class="stack"><p class="label">Dossier existant</p><h1>Retrouver mon dossier</h1>
         <p class="muted">Tu as changé de téléphone ou de navigateur ? Indique ton matricule et ton nom.</p></section>
-      <form class="dossier" id="f" novalidate>
+      <form class="feuille" id="f" novalidate>
         <div class="champ"><label for="matricule">Matricule</label><input id="matricule" inputmode="numeric" maxlength="4" class="matricule-input" placeholder="····" autocomplete="off"></div>
         <div class="champ"><label for="nom">Nom</label><input type="text" id="nom" autocomplete="family-name" maxlength="60"></div>
         <p class="erreur" id="err" hidden></p>
-        <button class="btn btn-or btn-bloc" type="submit">Retrouver</button>
+        <button class="btn btn-mer btn-bloc" type="submit">Retrouver</button>
       </form>
       <p class="pied"><a href="#/">Je n'ai pas encore de dossier</a></p>`);
     const f = document.getElementById('f'), err = document.getElementById('err');
@@ -427,21 +452,23 @@
   async function ecranActivite(id) {
     const a = activite(id);
     if (!a) {
-      cadre(`<section class="dossier"><h2>QR code inconnu</h2><p class="muted">Ce QR code ne correspond à aucune activité. Préviens un membre de l'équipe.</p><a class="btn btn-ligne" href="#/parcours">Voir les activités</a></section>`);
+      cadre(`<section class="feuille"><h2>QR code inconnu</h2><p class="muted">Ce QR code ne correspond à aucune activité. Préviens un membre de l'équipe.</p><a class="btn btn-ligne" href="#/parcours">Voir les activités</a></section>`);
       return;
     }
     const v = await moi();
     if (!v) { store.set(K_ATTENTE, id, sessionStorage); return aller(''); }
     if (v.niveau) {
-      cadre(`<section class="dossier"><h2>Ton parcours est terminé</h2><p class="muted">Cette activité ne compte plus, mais tu peux quand même la découvrir. N'oublie pas ta carte matricule à la porte arrière !</p><a class="btn btn-or" href="#/fin">Revoir mon niveau</a></section>`, { mat: v.matricule });
+      cadre(`<section class="feuille"><h2>Ton parcours est terminé</h2><p class="muted">Cette activité ne compte plus, mais tu peux quand même la découvrir. N'oublie pas ta carte matricule à la porte arrière !</p><a class="btn btn-mer" href="#/fin">Revoir mon niveau</a></section>`, { mat: v.matricule });
       return;
     }
     const res = await db.scanner(v.id, id);
     const faites = await db.scans(v.id);
     const n = faites.filter(activite).length, total = C.activites.length, min = minimum();
     cadre(`
-      <section class="dossier" style="align-items:center;text-align:center">
-        <div class="tampon ${res === 'ok' ? 'ok anim' : ''}" aria-hidden="true">${res === 'ok' ? 'Validé' : 'Déjà<br>validé'}<small>${n} / ${total}</small></div>
+      <section class="feuille centre">
+        ${res === 'ok'
+          ? cachet('Île Nou · activité validée · Île Nou · activité validée ·', 'Validé', `${n} / ${total}`, 'anim')
+          : cachet('Île Nou · déjà validée · Île Nou · déjà validée ·', 'Déjà', `${n} / ${total}`, 'deja')}
         <p class="label">${res === 'ok' ? 'Activité validée' : 'Tu avais déjà validé cette activité'}</p>
         <h1>${esc(a.nom)}</h1>
         <p>${esc(a.description)}</p>
@@ -453,7 +480,7 @@
           : n >= min
             ? `Tu as fait ${pluriel(n, 'activité')} : tu peux terminer ton parcours quand tu veux, ou continuer avec d'autres activités si tu en as envie.`
             : `Encore ${pluriel(min - n, 'activité')} au choix et tu pourras terminer ton parcours.`}</p>
-        <a class="btn btn-or btn-bloc" href="#/scanner">Scanner une autre activité</a>
+        <a class="btn btn-mer btn-bloc" href="#/scanner">Scanner une autre activité</a>
         <a class="btn btn-ligne btn-bloc" href="#/parcours">${n >= min ? 'Voir les activités ou terminer' : 'Voir les activités'}</a>
       </section>`, { mat: v.matricule });
   }
@@ -468,23 +495,27 @@
     cadre(`
       <section class="stack">
         <p class="label">Dossier de ${esc(v.prenom)}</p>
-        <h1>Les activités du stand</h1>
+        <h1>Les activités <em>du stand</em></h1>
       </section>
 
-      <section class="panneau libre">
+      <section class="libre">
         <h2>Tu es libre !</h2>
         <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Pas besoin de tout faire : il en faut <b>au moins ${min}</b> pour terminer ton parcours. Plus tu en fais, plus ton niveau monte.</p>
-        <div class="jalons" aria-label="${n} activités validées sur ${min} minimum">
-          ${Array.from({ length: min }, (_, i) => `<span class="jalon ${i < n ? 'ok' : ''}" aria-hidden="true">${i < n ? '✓' : i + 1}</span>`).join('')}
-          <span class="small ${peut ? '' : 'muted'}" style="margin-left:4px">${peut ? `<b>${pluriel(n, 'activité')} validée${n > 1 ? 's' : ''}</b> · tu peux terminer` : `Encore ${pluriel(min - n, 'activité')}`}</span>
+        <div class="timbres" role="img" aria-label="${n} activités validées sur ${min} minimum">
+          ${Array.from({ length: min }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''}"><span>${i + 1}</span></span>`).join('')}
         </div>
+        <p class="small ${peut ? '' : 'muted'}">${peut ? `<b>${pluriel(n, 'activité')} validée${n > 1 ? 's' : ''}</b> · tu peux terminer` : `Encore ${pluriel(min - n, 'activité')} avant de pouvoir terminer`}</p>
       </section>
 
-      <section class="dossier">
-        <div class="dossier-tete"><span class="label">${pluriel(total, 'activité')}</span><span class="registre muted">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
+      <section class="stack">
+        <div class="titre-ligne"><h2>${pluriel(total, 'activité')}</h2><span class="registre muted small">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
         <ul class="activites">
-          ${C.activites.map(a => `<li><div class="stack-sm" style="gap:2px;min-width:0"><span class="nom">${esc(a.nom)}</span><span class="muted small">${a.format ? `<b>${esc(a.format)}</b> · ` : ''}${esc(a.description)}</span></div>
-            ${faites.has(a.id) ? '<span class="pastille ok">Validé</span>' : '<span class="pastille">À découvrir</span>'}</li>`).join('')}
+          ${C.activites.map((a, i) => `<li class="activite ${faites.has(a.id) ? 'ok' : ''}">
+            <span class="num">N° ${String(i + 1).padStart(2, '0')}${a.format ? ` · ${esc(a.format)}` : ''}</span>
+            <h3>${esc(a.nom)}</h3>
+            <p class="desc">${esc(a.description)}</p>
+            ${faites.has(a.id) ? `${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span>` : '<span class="a-voir">À découvrir</span>'}
+          </li>`).join('')}
         </ul>
       </section>
 
@@ -496,7 +527,7 @@
              <p class="aide" style="text-align:center">Valide encore ${pluriel(min - n, 'activité')} pour pouvoir terminer.</p>`}
       </section>
 
-      <div class="barre-action"><a class="btn btn-or btn-bloc btn-scan" href="#/scanner"><span class="ico-scan" aria-hidden="true"></span>Scanner un QR code</a></div>`, { mat: v.matricule });
+      <div class="barre-action"><a class="btn btn-mer btn-bloc btn-scan" href="#/scanner">${ICO_SCAN}Scanner un QR code</a></div>`, { mat: v.matricule });
     document.body.classList.add('avec-action');
 
     const t = document.getElementById('terminer');
@@ -504,7 +535,7 @@
       document.getElementById('fin').innerHTML = `
         <div class="confirm">
           <p><b>Terminer ton parcours maintenant ?</b><br><span class="muted small">Tu ne pourras plus valider d'activité ensuite.</span></p>
-          <div class="row"><button class="btn btn-or" id="oui">Oui, j'ai fini</button><button class="btn btn-discret" id="non">Pas encore</button></div>
+          <div class="row"><button class="btn btn-mer" id="oui">Oui, j'ai fini</button><button class="btn btn-discret" id="non">Pas encore</button></div>
         </div>`;
       document.getElementById('fin').scrollIntoView({ block: 'center', behavior: 'smooth' });
       document.getElementById('non').onclick = ecranParcours;
@@ -529,7 +560,7 @@
         <video id="video" playsinline muted autoplay></video>
         <div class="viseur" aria-hidden="true"></div>
         <p class="scanner-msg" id="msg" role="status">Ouverture de la caméra…</p>
-        <a class="btn btn-or scanner-fermer" href="#/parcours">Annuler</a>
+        <a class="btn btn-sable scanner-fermer" href="#/parcours">Annuler</a>
       </section>`, { mat: v.matricule });
 
     const video = document.getElementById('video'), msg = document.getElementById('msg');
@@ -597,41 +628,43 @@
     const nv = niveau(v.niveau) || niveauPour(faites.length);
     const anim = store.get('forcats.anim', sessionStorage); store.set('forcats.anim', null, sessionStorage);
     cadre(`
-      <section class="stack" style="text-align:center">
+      <section class="stack centre">
         <p class="label">Parcours terminé</p>
         <h1 class="display-lg">${esc(nomComplet(v))}</h1>
         <p class="registre muted">MATRICULE #${esc(v.matricule)}</p>
       </section>
-      <section class="panneau sortie">
-        <span class="fleche" aria-hidden="true">➜</span>
+      <section class="sortie">
+        ${ICO_FLECHE}
         <div class="stack-sm">
           <p class="label">Dernière étape</p>
           <h2>Direction la porte arrière</h2>
           <p>${esc(C.messageFin)}</p>
-          <p class="muted small">Donne ton matricule <span class="registre" style="color:var(--gold-ink)">#${esc(v.matricule)}</span> à l'équipe.</p>
+          <p class="muted small">Donne ton matricule <span class="registre">#${esc(v.matricule)}</span> à l'équipe.</p>
         </div>
+        ${VAGUES}
       </section>
-      <section class="dossier" style="align-items:center;text-align:center">
+      <section class="feuille centre">
         <p class="muted small">Avec ${pluriel(faites.length, 'activité')}, ton niveau au bagne :</p>
-        <div class="tampon grand ${anim ? 'anim' : ''}">${esc(nv.titre)}</div>
+        ${cachet(`${nv.nom} · ${nv.nom} ·`, nv.titre, `${faites.length} / ${C.activites.length}`, `grand ${anim ? 'anim' : ''}`)}
         <h2>${esc(nv.nom)}</h2>
-        <p>${esc(nv.description)}</p>
+        <p class="muted">${esc(nv.description)}</p>
       </section>
-      <section class="dossier">
-        <div class="dossier-tete"><span class="label">Activités validées</span><span class="registre muted">${faites.length} / ${C.activites.length}</span></div>
-        <ul class="activites">${faites.map(a => `<li><span class="nom">${esc(a.nom)}</span><span class="pastille ok">Validé</span></li>`).join('') || '<li class="muted">Aucune</li>'}</ul>
-      </section>`, { mat: v.matricule });
+      <section class="stack">
+        <div class="titre-ligne"><h2>Ton <em>itinéraire</em></h2><span class="registre muted small">${faites.length} / ${C.activites.length}</span></div>
+        ${faites.length ? `<ul class="activites compact">${faites.map(a => `<li class="activite ok"><h3>${esc(a.nom)}</h3>${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span></li>`).join('')}</ul>` : '<p class="muted">Aucune activité validée.</p>'}
+      </section>
+      ${GRAVURE.replace('class="gravure"', 'class="gravure fin"')}`, { mat: v.matricule });
   }
 
   /* ================= Espace équipe ================= */
   function ecranCode(onglet) {
     cadre(`
-      <form class="dossier" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
+      <form class="feuille" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
         <h1>Espace équipe</h1>
         <p class="muted small">Réservé à l'équipe du forum : impression des cartes et QR codes.</p>
         <div class="champ"><label for="code">Code d'accès</label><input type="password" id="code" inputmode="numeric" autocomplete="off"></div>
         <p class="erreur" id="err" hidden>Code incorrect.</p>
-        <button class="btn btn-or" type="submit">Entrer</button>
+        <button class="btn btn-mer" type="submit">Entrer</button>
       </form>`, { equipe: true });
     document.getElementById('f').addEventListener('submit', e => {
       e.preventDefault();
@@ -706,12 +739,12 @@
         </div>
         <p class="small">${cartes.map(v => `<b>#${esc(v.matricule)}</b> ${esc(nomComplet(v))}`).join(' · ')}</p>
         <ol class="planche-etapes">
-          <li class="${etape > 0 ? 'fait' : ''}"><button class="btn ${etape === 0 ? 'btn-or' : 'btn-discret'}" data-pl="recto">1 · Imprimer le recto</button>
+          <li class="${etape > 0 ? 'fait' : ''}"><button class="btn ${etape === 0 ? 'btn-mer' : 'btn-discret'}" data-pl="recto">1 · Imprimer le recto</button>
             <span class="small muted">Feuille A4 épaisse. Dans la fenêtre d'impression : échelle 100 %, sans marges ni en-têtes.</span></li>
           <li class="${etape > 1 ? 'fait' : ''}"><span class="n-etape">2</span>
             <span class="small"><b>Remets la même feuille</b> dans l'imprimante, <b>retournée comme une page de livre</b> (le haut reste en haut).</span></li>
-          <li class="${etape > 1 ? 'fait' : ''}"><button class="btn ${etape === 1 ? 'btn-or' : 'btn-discret'}" data-pl="verso" ${etape < 1 ? 'disabled' : ''}>3 · Imprimer le verso</button></li>
-          <li><button class="btn ${etape === 2 ? 'btn-or' : 'btn-discret'}" data-pl="fini" ${etape < 2 ? 'disabled' : ''}>4 · Découpé : ${n > 1 ? `ces ${n} cartes sont imprimées` : 'carte imprimée'}</button>
+          <li class="${etape > 1 ? 'fait' : ''}"><button class="btn ${etape === 1 ? 'btn-mer' : 'btn-discret'}" data-pl="verso" ${etape < 1 ? 'disabled' : ''}>3 · Imprimer le verso</button></li>
+          <li><button class="btn ${etape === 2 ? 'btn-mer' : 'btn-discret'}" data-pl="fini" ${etape < 2 ? 'disabled' : ''}>4 · Découpé : ${n > 1 ? `ces ${n} cartes sont imprimées` : 'carte imprimée'}</button>
             <span class="small muted">Découpe en suivant les traits dans les marges.</span></li>
         </ol>`;
     }
@@ -771,17 +804,17 @@
     function fiche(v, surPlanche) {
       const nb = v.scans.filter(activite).length;
       const nv = v.niveau ? niveau(v.niveau) : null;
-      return `<article class="dossier fiche ${surPlanche ? 'sur-planche' : ''}">
-        <div class="dossier-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span>
-          <span class="registre muted">${surPlanche ? '<span class="pastille or">Sur la planche</span> ' : ''}${heure(v.created_at)}</span></div>
+      return `<article class="feuille fiche ${surPlanche ? 'sur-planche' : ''}">
+        <div class="feuille-tete"><span class="fiche-mat"><button class="copiable" data-copie="${esc(v.matricule)}" title="Copier le matricule">#${esc(v.matricule)}</button></span>
+          <span class="registre muted">${surPlanche ? '<span class="pastille cuivre">Sur la planche</span> ' : ''}${heure(v.created_at)}</span></div>
         <div class="fiche-carte" data-carte="${v.id}"><span class="muted small">Préparation de la carte…</span></div>
         <div class="row" style="justify-content:space-between">
           <span class="fiche-nom">${esc(nomComplet(v))}</span>
-          ${nv ? `<span class="pastille or">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
+          ${nv ? `<span class="pastille cuivre">Terminé · ${esc(nv.titre)}</span>` : `<span class="pastille">En visite · ${pluriel(nb, 'activité')}</span>`}
         </div>
         <div class="row">
           ${v.imprime
-            ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">✓ Imprimée · remettre dans la file</button>`
+            ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">Imprimée · remettre dans la file</button>`
             : `<button class="btn btn-discret btn-sm" data-act="imprime" data-id="${v.id}" data-val="1">Marquer imprimée</button>`}
           <button class="btn btn-discret btn-sm" data-act="carte-dl" data-id="${v.id}">Télécharger la carte</button>
         </div>
@@ -854,12 +887,12 @@
   function ecranTablette(id) {
     if (store.get(K_TABLETTE) !== '1') {
       cadre(`
-        <form class="dossier" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
+        <form class="feuille" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
           <h1>Tablette du stand</h1>
           <p class="muted small">Réservé à l'équipe : à déverrouiller une fois, la tablette s'en souvient.</p>
           <div class="champ"><label for="code">Code d'accès</label><input type="password" id="code" inputmode="numeric" autocomplete="off"></div>
           <p class="erreur" id="err" hidden>Code incorrect.</p>
-          <button class="btn btn-or" type="submit">Entrer</button>
+          <button class="btn btn-mer" type="submit">Entrer</button>
         </form>`, { equipe: true });
       document.getElementById('f').addEventListener('submit', e => {
         e.preventDefault();
@@ -894,8 +927,8 @@
           ? `<iframe class="tablette-jeu" src="${esc(a.jeu)}" title="${esc(a.nom)}" allow="autoplay; fullscreen"></iframe>`
           : `<div class="tablette-vide dossier"><h1>${esc(a.nom)}</h1><p class="muted">Jeu pas encore installé : mets ses fichiers dans <span class="registre">${esc(a.jeu)}</span>.</p></div>`}
         <div class="tablette-outils">
-          <a class="btn btn-ligne" href="#/tablette/menu" aria-label="Changer de jeu">☰</a>
-          <button class="btn btn-or" id="suivant">Visiteur suivant</button>
+          <a class="btn btn-ligne" href="#/tablette/menu" >Changer de jeu</a>
+          <button class="btn btn-mer" id="suivant">Visiteur suivant</button>
         </div>
       </div>`;
     /* Relance le jeu à zéro. Deux appuis, pour qu'un visiteur ne coupe pas sa partie par erreur. */
@@ -922,6 +955,8 @@
     const [page, arg] = h.split('/');
     try {
       if (page === 'tablette') return ecranTablette(arg);
+      // Pour tester : oublie le dossier de ce téléphone (il reste dans la base, retrouvable par « J'ai déjà un dossier »).
+      if (page === 'reset') { store.set(K_MOI, null); store.set(K_ATTENTE, null, sessionStorage); return aller(''); }
       if (page !== 'equipe') chargement();
       if (page === 'activite') return await ecranActivite(arg);
       if (page === 'parcours') return await ecranParcours();
