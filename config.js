@@ -133,10 +133,10 @@ window.FORUM_CONFIG = {
     },
     {
       id: '4-images',
-      nom: '4 images, 1 mot',
+      nom: 'Bout à bout',
       format: 'Numérique',
       jeu: 'jeux/4-images/index.html',
-      description: "Quatre images ont un point commun : trouve le mot du bagne qui les relie."
+      description: "Quatre images, un seul mot : trouve ce qu'elles ont en commun."
     },
     {
       id: 'argot',
