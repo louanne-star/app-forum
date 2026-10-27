@@ -89,13 +89,19 @@
     brun: '#6d5b4a', encre: '#655b52', creme: '#f6eedd',
     police: "'Roboto Slab', Georgia, serif", serrage: 0.78,
   };
+  /* Fond et verso intégrés (carte/images.js, chargé par l'espace équipe) : en file://,
+     une image du disque dessinée dans un canvas le rendrait inutilisable. */
+  const imagesCarte = () => window.CARTE_IMAGES || { recto: CARTE.fond, verso: CARTE.verso };
+  const chargerScript = src => new Promise(ok => {
+    const s = document.createElement('script'); s.src = src; s.onload = s.onerror = ok; document.head.appendChild(s);
+  });
   const chargerImage = src => new Promise((ok, ko) => {
     const i = new Image(); i.crossOrigin = 'anonymous';
     i.onload = () => ok(i); i.onerror = () => ko(new Error('image ' + src)); i.src = src;
   });
   async function dessinerCarte(v) {
     await document.fonts.load(`800 ${CARTE.texte.taille}px ${CARTE.police}`).catch(() => {});
-    const [fond, photo] = await Promise.all([chargerImage(CARTE.fond), v.photo ? chargerImage(v.photo).catch(() => null) : null]);
+    const [fond, photo] = await Promise.all([chargerImage(imagesCarte().recto), v.photo ? chargerImage(v.photo).catch(() => null) : null]);
     const c = document.createElement('canvas'); c.width = CARTE.l; c.height = CARTE.h;
     const x = c.getContext('2d');
     x.drawImage(fond, 0, 0, CARTE.l, CARTE.h);
@@ -663,6 +669,7 @@
     const zone = document.getElementById('zone');
 
     if (onglet === 'qr') return posteQR(zone);
+    if (!window.CARTE_IMAGES) await chargerScript('carte/images.js');
 
     let voirTout = false;
     let nbVoulu = PLANCHE.max;   // nombre de cartes souhaité sur la prochaine planche
@@ -718,7 +725,7 @@
         b.disabled = true;
         try {
           if (act === 'recto') { enCours = cartes.map(v => v.id); imprimerPlanche(await Promise.all(cartes.map(imageCarte)), false); etape = Math.max(etape, 1); }
-          else { imprimerPlanche(cartes.map(() => CARTE.verso), true); etape = 2; }
+          else { imprimerPlanche(cartes.map(() => imagesCarte().verso), true); etape = 2; }
         } catch (err) { console.error(err); toast('Planche impossible à préparer, vérifie le réseau'); }
         dessiner(); return;
       }
