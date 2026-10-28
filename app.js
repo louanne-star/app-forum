@@ -149,42 +149,49 @@
     }
     return cacheCartes.get(cle);
   }
-  /* Planche A4 : 2 × 5 cartes à taille réelle. Le verso est placé en miroir pour
-     une feuille retournée comme une page de livre, et déborde un peu (fond perdu)
-     pour pardonner un léger décalage. Repères de coupe dans les marges du recto. */
-  const PLANCHE = { l: 88.9, h: 50.8, cols: 2, rows: 5, gout: 4, perdu: 1.5, pageL: 210, pageH: 297 };
+  /* Planche A4 imprimée en recto verso automatique (retournement bord long) :
+     page 1 = recto, page 2 = verso. Les cartes sont posées en bandes de 2 en HAUT
+     de la feuille : on coupe droit sous la dernière bande et on remet le reste de
+     la feuille pour la planche suivante. Le verso est en miroir gauche-droite et
+     déborde un peu (fond perdu) pour pardonner un léger décalage.
+     Repères de coupe dans les marges du recto. */
+  const PLANCHE = { l: 88.9, h: 50.8, cols: 2, rows: 5, gout: 4, perdu: 1.5, pageL: 210, pageH: 297, haut: 10 };
   PLANCHE.max = PLANCHE.cols * PLANCHE.rows;
   PLANCHE.x0 = (PLANCHE.pageL - (PLANCHE.cols * PLANCHE.l + (PLANCHE.cols - 1) * PLANCHE.gout)) / 2;
-  PLANCHE.y0 = (PLANCHE.pageH - (PLANCHE.rows * PLANCHE.h + (PLANCHE.rows - 1) * PLANCHE.gout)) / 2;
-  function imprimerPlanche(urls, verso) {
+  PLANCHE.y0 = PLANCHE.haut;
+  function imprimerPlanche(rectos, verso) {
     const P = PLANCHE, mm = n => n.toFixed(2) + 'mm';
-    const imgs = urls.map((u, i) => {
+    const placer = (urls, envers) => urls.map((u, i) => {
       const c = i % P.cols, r = Math.floor(i / P.cols);
-      const col = verso ? P.cols - 1 - c : c, d = verso ? P.perdu : 0;
+      const col = envers ? P.cols - 1 - c : c, d = envers ? P.perdu : 0;
       const x = P.x0 + col * (P.l + P.gout), y = P.y0 + r * (P.h + P.gout);
       return `<img src="${u}" style="left:${mm(x - d)};top:${mm(y - d)};width:${mm(P.l + 2 * d)};height:${mm(P.h + 2 * d)}">`;
     }).join('');
+    // Repères : traits verticaux au-dessus de la bande, horizontaux dans les marges gauche et droite.
+    const rangs = Math.ceil(rectos.length / P.cols), cols = Math.min(rectos.length, P.cols);
+    const xs = [], ys = [];
+    for (let c = 0; c < cols; c++) { const x = P.x0 + c * (P.l + P.gout); xs.push(x, x + P.l); }
+    for (let r = 0; r < rangs; r++) { const y = P.y0 + r * (P.h + P.gout); ys.push(y, y + P.h); }
+    const xFin = P.pageL - P.x0;
     let reperes = '';
-    if (!verso) {
-      const xs = [], ys = [];
-      for (let c = 0; c < P.cols; c++) { const x = P.x0 + c * (P.l + P.gout); xs.push(x, x + P.l); }
-      for (let r = 0; r < P.rows; r++) { const y = P.y0 + r * (P.h + P.gout); ys.push(y, y + P.h); }
-      const xFin = xs[xs.length - 1], yFin = ys[ys.length - 1];
-      xs.forEach(x => { reperes += `<i style="left:${mm(x)};top:${mm(3)};width:.2mm;height:${mm(P.y0 - 5)}"></i><i style="left:${mm(x)};top:${mm(yFin + 2)};width:.2mm;height:${mm(P.pageH - yFin - 5)}"></i>`; });
-      ys.forEach(y => { reperes += `<i style="top:${mm(y)};left:${mm(3)};height:.2mm;width:${mm(P.x0 - 5)}"></i><i style="top:${mm(y)};left:${mm(xFin + 2)};height:.2mm;width:${mm(P.pageL - xFin - 5)}"></i>`; });
-    }
+    xs.forEach(x => { reperes += `<i style="left:${mm(x)};top:${mm(2)};width:.2mm;height:${mm(P.y0 - 4)}"></i>`; });
+    ys.forEach(y => { reperes += `<i style="top:${mm(y)};left:${mm(2)};height:.2mm;width:${mm(P.x0 - 4)}"></i><i style="top:${mm(y)};left:${mm(xFin + 2)};height:.2mm;width:${mm(P.pageL - xFin - 4)}"></i>`; });
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
     document.body.appendChild(f);
     const d = f.contentDocument;
     d.open();
-    d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${verso ? 'Verso' : 'Recto'}</title><style>
+    d.write(`<!doctype html><html><head><meta charset="utf-8"><title>Cartes matricule</title><style>
       @page { size: A4 portrait; margin: 0; }
       html, body { margin: 0; }
-      .feuille { position: relative; width: ${P.pageL}mm; height: ${P.pageH}mm; overflow: hidden; }
+      .feuille { position: relative; width: ${P.pageL}mm; height: ${P.pageH}mm; overflow: hidden; break-after: page; }
+      .feuille:last-child { break-after: auto; }
       img { position: absolute; display: block; }
       i { position: absolute; background: #000; }
-    </style></head><body><div class="feuille">${imgs}${reperes}</div></body></html>`);
+    </style></head><body>
+      <div class="feuille">${placer(rectos, false)}${reperes}</div>
+      <div class="feuille">${placer(rectos.map(() => verso), true)}</div>
+    </body></html>`);
     d.close();
     const images = [...d.images];
     Promise.all(images.map(i => i.complete ? null : new Promise(ok => { i.onload = i.onerror = ok; }))).then(() => {
@@ -725,14 +732,12 @@
     if (!window.CARTE_IMAGES) await chargerScript('carte/images.js');
 
     let voirTout = false;
-    let nbVoulu = PLANCHE.max;   // nombre de cartes souhaité sur la prochaine planche
-    let enCours = null;          // ids figés au moment d'imprimer le recto
-    let etape = 0;               // 0 : rien d'imprimé, 1 : recto imprimé, 2 : verso imprimé
+    let nbVoulu = 2;             // nombre de cartes souhaité sur la prochaine planche (une bande de 2)
     zone.innerHTML = `<div class="stack">
         <div class="stats" id="stats"></div>
         <section class="panneau planche" id="planche"></section>
         <div class="row" style="justify-content:space-between">
-          <div><h1>File d'attente</h1><p class="muted small">Les inscriptions arrivent ici en direct. Les visiteurs qui ont terminé leur parcours passent en premier, puis l'ordre d'arrivée.</p></div>
+          <div><h1>File d'attente</h1><p class="muted small">Les inscriptions arrivent ici en direct, la plus récente en premier.</p></div>
           <button class="btn btn-discret btn-sm" id="tout">Voir aussi les imprimées</button>
         </div>
         <div class="grille" id="liste"></div></div>`;
@@ -744,51 +749,38 @@
     /* Ordre de la file : parcours terminé d'abord (la carte est attendue à la porte), puis arrivée. */
     const file = () => donnees.filter(v => !v.imprime).sort((a, b) =>
       (!!b.niveau - !!a.niveau) || (a.niveau ? (a.termine_at || '').localeCompare(b.termine_at || '') : 0) || a.created_at.localeCompare(b.created_at));
-    const prochaine = () => enCours ? enCours.map(id => donnees.find(v => v.id === id)).filter(Boolean) : file().slice(0, nbVoulu);
+    const prochaine = () => file().slice(0, nbVoulu);
 
     function dessinerPlanche() {
       const cartes = prochaine(), n = cartes.length, attente = file().length;
-      if (!enCours && !attente) { panneau.innerHTML = '<h2>Planche à imprimer</h2><p class="muted small">Aucune carte en attente.</p>'; return; }
+      if (!attente) { panneau.innerHTML = '<h2>Planche à imprimer</h2><p class="muted small">Aucune carte en attente.</p>'; return; }
       panneau.innerHTML = `
         <div class="row" style="justify-content:space-between">
           <h2>Planche à imprimer · ${pluriel(n, 'carte')}</h2>
-          ${enCours ? '<button class="btn btn-discret btn-sm" data-pl="annuler">Annuler cette planche</button>'
-            : `<label class="small muted">Cartes sur la feuille
-                 <select data-pl="nb">${Array.from({ length: Math.min(attente, PLANCHE.max) }, (_, i) => `<option ${i + 1 === n ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>`}
+          <label class="small muted">Cartes sur la feuille
+            <select data-pl="nb">${Array.from({ length: Math.min(attente, PLANCHE.max) }, (_, i) => `<option ${i + 1 === n ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>
         </div>
         <p class="small">${cartes.map(v => `<b>#${esc(v.matricule)}</b> ${esc(nomComplet(v))}`).join(' · ')}</p>
-        <ol class="planche-etapes">
-          <li class="${etape > 0 ? 'fait' : ''}"><button class="btn ${etape === 0 ? 'btn-mer' : 'btn-discret'}" data-pl="recto">1 · Imprimer le recto</button>
-            <span class="small muted">Feuille A4 épaisse. Dans la fenêtre d'impression : échelle 100 %, sans marges ni en-têtes.</span></li>
-          <li class="${etape > 1 ? 'fait' : ''}"><span class="n-etape">2</span>
-            <span class="small"><b>Remets la même feuille</b> dans l'imprimante, <b>retournée comme une page de livre</b> (le haut reste en haut).</span></li>
-          <li class="${etape > 1 ? 'fait' : ''}"><button class="btn ${etape === 1 ? 'btn-mer' : 'btn-discret'}" data-pl="verso" ${etape < 1 ? 'disabled' : ''}>3 · Imprimer le verso</button></li>
-          <li><button class="btn ${etape === 2 ? 'btn-mer' : 'btn-discret'}" data-pl="fini" ${etape < 2 ? 'disabled' : ''}>4 · Découpé : ${n > 1 ? `ces ${n} cartes sont imprimées` : 'carte imprimée'}</button>
-            <span class="small muted">Découpe en suivant les traits dans les marges.</span></li>
-        </ol>`;
+        <div class="planche-action">
+          <button class="btn btn-mer" data-pl="imprimer">Imprimer recto verso</button>
+        </div>`;
     }
 
     panneau.addEventListener('change', e => { if (e.target.dataset.pl === 'nb') { nbVoulu = Number(e.target.value); dessinerPlanche(); dessiner(); } });
     panneau.addEventListener('click', async e => {
       const b = e.target.closest('[data-pl]'); if (!b || b.tagName === 'SELECT') return;
       const act = b.dataset.pl;
-      if (act === 'annuler') { enCours = null; etape = 0; dessiner(); return; }
-      if (act === 'recto' || act === 'verso') {
+      // Imprimer marque aussitôt les cartes imprimées : si l'impression rate,
+      // « remettre dans la file » sur la fiche les fait revenir.
+      if (act === 'imprimer') {
         const cartes = prochaine(); if (!cartes.length) return;
         b.disabled = true;
         try {
-          if (act === 'recto') { enCours = cartes.map(v => v.id); imprimerPlanche(await Promise.all(cartes.map(imageCarte)), false); etape = Math.max(etape, 1); }
-          else { imprimerPlanche(cartes.map(() => imagesCarte().verso), true); etape = 2; }
-        } catch (err) { console.error(err); toast('Planche impossible à préparer, vérifie le réseau'); }
-        dessiner(); return;
-      }
-      if (act === 'fini') {
-        b.disabled = true;
-        try {
-          await Promise.all(prochaine().map(v => db.maj(v.id, { imprime: true })));
-          toast(`${pluriel(enCours.length, 'carte')} marquée${enCours.length > 1 ? 's' : ''} imprimée${enCours.length > 1 ? 's' : ''}`);
-          enCours = null; etape = 0; await charger();
-        } catch (err) { console.error(err); b.disabled = false; toast('Action impossible, vérifie le réseau'); }
+          imprimerPlanche(await Promise.all(cartes.map(imageCarte)), imagesCarte().verso);
+          await Promise.all(cartes.map(v => db.maj(v.id, { imprime: true })));
+          toast(`${pluriel(cartes.length, 'carte')} marquée${cartes.length > 1 ? 's' : ''} imprimée${cartes.length > 1 ? 's' : ''}`);
+          await charger();
+        } catch (err) { console.error(err); b.disabled = false; toast('Planche impossible à préparer, vérifie le réseau'); }
       }
     });
 
@@ -813,7 +805,8 @@
         <div class="stat"><span class="label">En visite</span><b>${donnees.filter(v => !v.niveau).length}</b></div>
         <div class="stat"><span class="label">Parcours terminés</span><b>${donnees.filter(v => v.niveau).length}</b></div>`;
 
-      const items = voirTout ? [...file(), ...donnees.filter(v => v.imprime).sort((a, b) => a.created_at.localeCompare(b.created_at))] : file();
+      // Affichage : de la plus récente à la plus ancienne (la planche, elle, suit l'ordre de la file).
+      const items = donnees.filter(v => voirTout || !v.imprime).sort((a, b) => b.created_at.localeCompare(a.created_at));
       const surPlanche = new Set(prochaine().map(v => v.id));
       liste.innerHTML = items.length ? items.map(v => fiche(v, surPlanche.has(v.id))).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
       dessinerPlanche();
@@ -884,15 +877,16 @@
 
   function posteQR(zone) {
     const base = baseQR();
-    const carte = (titre, sous, route, desc = '') => `<article class="qr-carte">${qr(lien(route))}<h3>${esc(titre)}</h3>${desc ? `<p class="small">${esc(desc)}</p>` : ''}<p class="small"><b>${esc(sous)}</b></p><p class="registre">${esc(lien(route))}</p></article>`;
+    const carte = (titre, route, sous = '') => `<article class="qr-carte">${qr(lien(route))}<h3>${esc(titre)}</h3>${sous ? `<p class="small"><b>${esc(sous)}</b></p>` : ''}</article>`;
     zone.innerHTML = `
       <div class="stack">
-        <h1>QR codes</h1>
+        <h1>QR codes <em>des activités</em></h1>
+        <p class="chapo">Quand un visiteur a fini une activité, il scanne son QR code avec le bouton « Scanner » de l'appli : l'activité est validée.</p>
         ${!C.baseUrl ? `<p class="alerte no-print">Ces QR codes pointent vers <span class="registre">${esc(base)}</span>. Avant d'imprimer, renseigne l'adresse Netlify dans <span class="registre">baseUrl</span> (config.js).</p>` : ''}
-        <p class="muted small no-print">Imprime cette page (Ctrl/Cmd + P) depuis le site déployé : un QR pour l'entrée (à scanner avec l'appareil photo), un par activité (à scanner avec le bouton « Scanner » de l'appli).</p>
+        <p class="muted small no-print">Imprime cette page (Ctrl/Cmd + P) depuis le site déployé. Le premier QR, celui de l'entrée, sert à s'inscrire : il se scanne avec l'appareil photo du téléphone.</p>
         <div class="grille">
-          ${carte('Entrée', "Scanne avec l'appareil photo de ton téléphone pour t'inscrire", '')}
-          ${C.activites.map(a => carte(a.nom, "Activité finie ? Scanne avec le bouton « Scanner » de l'appli pour la valider", 'activite/' + a.id, (a.format ? a.format + ' · ' : '') + a.description)).join('')}
+          ${carte('Entrée', '', "Scanne avec l'appareil photo de ton téléphone pour t'inscrire")}
+          ${C.activites.map(a => carte(a.nom, 'activite/' + a.id)).join('')}
         </div>
       </div>`;
   }

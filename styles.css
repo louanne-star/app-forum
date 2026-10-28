@@ -372,10 +372,7 @@ body.avec-action .page { padding-bottom: 130px; }
 .sur-planche { border-color: var(--ocre); box-shadow: 0 0 0 1px var(--ocre); }
 .planche { background: var(--papier); border: 1px solid var(--encre); border-radius: var(--r-lg); padding: 20px; }
 .planche select { margin-left: 6px; font: 500 15px var(--sans); padding: 5px 10px; border-radius: var(--r-sm); border: 1px solid var(--trait-fort); background: var(--creme); color: var(--texte); }
-.planche-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
-.planche-etapes li { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--r-md); background: var(--creme); }
-.planche-etapes li.fait { opacity: .5; }
-.n-etape { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--encre); color: var(--encre); display: grid; place-items: center; font: italic 400 18px/1 var(--serif); }
+.planche-action { display: flex; }
 
 /* QR codes */
 .qr-carte { border: 1px solid var(--trait-fort); border-radius: var(--r-lg); background: #fffdf8; color: var(--texte); padding: 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }

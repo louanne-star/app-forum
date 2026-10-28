@@ -32,20 +32,20 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 - **Espace équipe** (sur l'ordi d'impression) : `<adresse>/#/equipe`, code dans `config.js` (`codeEquipe`).
   - Chaque inscription arrive en direct avec un petit son (clique une fois dans la page pour l'activer). La plus ancienne est en premier.
   - Chaque fiche montre la **carte matricule déjà remplie** (photo, NOM, prénom, matricule) sur le modèle Canva.
-  - **Planche** (jusqu'à 10 cartes par A4 épaisse, recto-verso à la main, Epson ET-15000) :
-    1. **Imprimer le recto** (échelle **100 %**, marges « aucune », sans en-têtes ni pieds de page).
-    2. Remettre **la même feuille**, retournée comme une page de livre (le haut reste en haut).
-    3. **Imprimer le verso** : il est placé en miroir pour tomber pile derrière chaque recto.
-    4. Découper le long des traits dans les marges, puis **« ces cartes sont imprimées »**.
-  - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer.
-  - **Avant le forum : faire une planche test sur papier normal** pour vérifier dans quel sens remettre la feuille dans l'imprimante (regarder la feuille à la lumière : recto et verso doivent se superposer).
+  - **Planche** (A4 épaisse, recto verso automatique, Epson ET-15000) : les cartes sont posées **en bande de 2 en haut de la feuille** (plus de bandes si on choisit plus de cartes, jusqu'à 10).
+    1. **Imprimer recto verso** : une seule impression de 2 pages (page 1 = recto, page 2 = verso). Dans la fenêtre d'impression : **recto verso, retournement bord long**, échelle **100 %**, marges « aucune », sans en-têtes ni pieds de page. Les cartes sont aussitôt marquées imprimées et la planche suivante se prépare.
+    2. **Couper droit** sous les cartes (traits dans les marges) et séparer les cartes.
+    3. Remettre **le reste de la feuille** dans l'imprimante, **bord coupé en haut**, pour la bande suivante.
+  - Impression ratée ? Sur la fiche du visiteur (« Voir aussi les imprimées ») : **« Imprimée · remettre dans la file »**.
+  - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer (2 par défaut).
+  - **Avant le forum : faire des tests sur papier normal** : vérifier que recto et verso se superposent (regarder la feuille à la lumière), puis que l'imprimante accepte encore la feuille raccourcie en recto verso après 1, 2, 3 bandes coupées.
   - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
 - **Tablettes du stand** : `<adresse>/#/tablette` (même code équipe, la tablette s'en souvient). On choisit le jeu, il s'ouvre en plein écran. Les visiteurs ne voient jamais les jeux sur leur téléphone.
   - Fin de partie : l'équipe montre au visiteur le **QR imprimé** de l'activité (page `#/equipe/qr`, un par activité, papier comme numérique). Il le scanne avec « Scanner » de son appli → activité validée.
   - **« Visiteur suivant »** (deux appuis) relance le jeu à zéro. L'Évasion repart aussi avec 0 fin découverte. Le bouton ☰ permet de changer de jeu.
   - Chaque jeu numérique vit dans `jeux/<id>/index.html` (chemin `jeu` dans config.js).
 - **Casque VR** : ouvrir https://vr-forum.netlify.app dans le navigateur du casque. Validation comme les autres : le QR imprimé de l'activité.
-- **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`Carte matricule/7.png`) ne change pas : à imprimer à l'avance.
+- **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`carte/verso.png`) est le même pour tous : il est imprimé automatiquement en page 2.
   - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).
 - **Visiteur qui change de téléphone** : lien « J'ai déjà un dossier » (matricule + nom).
 - **Matricule déjà pris** : l'appli demande au visiteur d'en choisir un autre.

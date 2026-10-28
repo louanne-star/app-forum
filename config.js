@@ -63,7 +63,7 @@ window.FORUM_CONFIG = {
   /* ---------- 8. Les activités du stand ----------
      id          : identifiant court, sans espace ni accent (il est dans le QR code)
      nom         : nom affiché
-     format      : 'Papier', 'Numérique' ou 'Réalité virtuelle' (affiché dans la liste et sur le QR imprimé)
+     format      : 'Papier', 'Numérique' ou 'Réalité virtuelle' (pour l'équipe, pas affiché aux visiteurs)
      jeu         : (numérique) page du jeu, ouverte sur les tablettes du stand (#/tablette).
      description : l'explication donnée au visiteur dans la liste des activités
      Chaque activité a son QR code (#/equipe/qr) : le visiteur le scanne
