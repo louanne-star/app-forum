@@ -369,6 +369,10 @@ body.avec-action .page { padding-bottom: 130px; }
 @keyframes vise { from { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
 .viseur::after { content: ''; position: absolute; left: 8%; right: 8%; top: 8%; height: 2px; border-radius: 2px; background: #e2c48a; box-shadow: 0 0 12px #e2c48a; animation: balaie 2.2s ease-in-out .5s infinite alternate; }
 @keyframes balaie { to { top: 92%; } }
+/* QR repéré : le cadre passe au doré pendant qu'on tient la visée. */
+.viseur { transition: border-color .2s, transform .2s; }
+.viseur.trouve { border-color: #e2c48a; border-width: 3px; transform: translate(-50%, -50%) scale(.96); }
+.viseur.trouve::after { animation-duration: .7s; }
 .revele .page > .scanner { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {

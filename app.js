@@ -609,7 +609,11 @@
 
     const detecteur = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
     const toile = document.createElement('canvas'), ctx = toile.getContext('2d', { willReadFrequently: true });
-    let dernierInconnu = '';
+    /* Pas de validation au vol : on attend un peu après l'ouverture, puis le même
+       QR doit rester dans le viseur un moment (QR croisé par hasard = ignoré). */
+    const debut = Date.now(), ATTENTE = 1000, TENUE = 700;
+    let dernierInconnu = '', vu = '', depuis = 0, dernierVu = 0;
+    const viseur = document.querySelector('.viseur');
     async function lire() {
       if (!actif) return;
       let texte = null;
@@ -626,14 +630,19 @@
           }
         }
       } catch (e) { console.error(e); }
-      if (texte && actif) {
-        const id = lireId(texte);
-        if (activite(id)) {
+      const id = texte && actif && Date.now() - debut > ATTENTE ? lireId(texte) : null;
+      if (id && activite(id)) {
+        dernierVu = Date.now();
+        if (id !== vu) { vu = id; depuis = dernierVu; viseur.classList.add('trouve'); msg.textContent = 'QR code trouvé, ne bouge pas…'; }
+        else if (dernierVu - depuis >= TENUE) {
           if (navigator.vibrate) navigator.vibrate(80);
           arreter();
-          return aller('activite/' + id);
+          return setTimeout(() => aller('activite/' + id), 250);
         }
-        if (texte !== dernierInconnu) { dernierInconnu = texte; msg.textContent = "Ce QR code n'est pas une activité du stand."; }
+      } else {
+        // une lecture ratée de temps en temps est normale : on ne relâche qu'après 0,5 s sans le QR
+        if (vu && Date.now() - dernierVu > 500) { vu = ''; viseur.classList.remove('trouve'); msg.textContent = "Vise le QR code de l'activité"; }
+        if (id && texte !== dernierInconnu) { dernierInconnu = texte; msg.textContent = "Ce QR code n'est pas une activité du stand."; }
       }
       minuteur = setTimeout(lire, 150);
     }
