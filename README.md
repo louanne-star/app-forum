@@ -40,7 +40,7 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
   - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer (2 par défaut).
   - **Avant le forum : faire des tests sur papier normal** : vérifier que recto et verso se superposent (regarder la feuille à la lumière), puis que l'imprimante accepte encore la feuille raccourcie en recto verso après 1, 2, 3 bandes coupées.
   - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
-- **Tablettes du stand** : `<adresse>/#/tablette` (même code équipe, la tablette s'en souvient). On choisit le jeu, il s'ouvre en plein écran. Les visiteurs ne voient jamais les jeux sur leur téléphone.
+- **Tablettes du stand** : `<adresse>/#/tablette` (même code équipe, la tablette s'en souvient). On choisit le jeu, il s'ouvre en plein écran (sans barre du navigateur sur Android et iPad ; sur iPhone, ou si la barre revient, ajouter la page `#/tablette` à l'écran d'accueil avec Partager → « Sur l'écran d'accueil » et l'ouvrir depuis l'icône). Les visiteurs ne voient jamais les jeux sur leur téléphone.
   - Fin de partie : l'équipe montre au visiteur le **QR imprimé** de l'activité (page `#/equipe/qr`, un par activité, papier comme numérique). Il le scanne avec « Scanner » de son appli → activité validée.
   - **« Visiteur suivant »** (deux appuis) relance le jeu à zéro. L'Évasion repart aussi avec 0 fin découverte. Le bouton ☰ permet de changer de jeu.
   - Chaque jeu numérique vit dans `jeux/<id>/index.html` (chemin `jeu` dans config.js).

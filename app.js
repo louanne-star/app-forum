@@ -906,6 +906,14 @@
      du visiteur. Partie finie : l'équipe montre le QR imprimé de l'activité (#/equipe/qr),
      le visiteur le scanne avec le bouton « Scanner » de son appli pour la valider. */
   const jeuxNumeriques = () => C.activites.filter(a => a.jeu || a.lien);
+  /* Vrai plein écran (sans barre d'adresse ni onglets). Le navigateur ne l'accepte
+     qu'au toucher : on le demande quand l'équipe choisit un jeu ou touche un bouton. */
+  function pleinEcran() {
+    const d = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    const f = d.requestFullscreen || d.webkitRequestFullscreen;
+    if (f) try { const r = f.call(d); if (r && r.catch) r.catch(() => { }); } catch { }
+  }
 
   function ecranTablette(id) {
     if (store.get(K_TABLETTE) !== '1') {
@@ -931,9 +939,10 @@
           <h1>Quel jeu sur cette tablette ?</h1>
           <p class="muted small">Touche un jeu : il s'ouvre en plein écran et revient au début pour chaque visiteur.</p>
           <div class="grille">
-            ${jeuxNumeriques().map(j => `<a class="choix-jeu" href="${j.jeu ? `#/tablette/${esc(j.id)}` : esc(j.lien)}"><span class="nom">${esc(j.nom)}</span><span class="muted small">${esc(j.description)}</span></a>`).join('')}
+            ${jeuxNumeriques().map(j => `<a class="choix-jeu" href="${j.jeu ? `#/tablette/${esc(j.id)}` : esc(j.lien)}"><span class="nom">${esc(j.nom)}</span></a>`).join('')}
           </div>
         </div>`, { equipe: true });
+      app.querySelectorAll('.choix-jeu[href^="#"]').forEach(l => l.addEventListener('click', pleinEcran));
       return;
     }
     jouer(a);
@@ -957,6 +966,7 @@
     /* Relance le jeu à zéro. Deux appuis, pour qu'un visiteur ne coupe pas sa partie par erreur. */
     const bouton = document.getElementById('suivant');
     let delai;
+    app.querySelector('.tablette-outils').addEventListener('click', pleinEcran);
     bouton.onclick = () => {
       clearTimeout(delai);
       if (!bouton.dataset.confirmer) {
