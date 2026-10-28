@@ -91,7 +91,9 @@ p { margin: 0; }
 
 /* ---------- Gravure ---------- */
 .gravure { display: block; width: calc(100% + 40px); max-width: none; height: auto; margin: -20px -20px -8px; }
-.gravure.fin { margin-top: 0; }
+/* Fin : la gravure remonte derrière l'itinéraire (la liste passe devant). */
+.gravure.fin { position: relative; z-index: 0; margin-top: -55%; opacity: .75; }
+.page:has(> .gravure.fin) > .stack:has(.activites) { position: relative; z-index: 1; }
 /* Accueil : la gravure remonte sous le titre, dans son ciel vide. */
 .hero .ciel { position: relative; overflow: hidden; margin: -180px -20px -8px; }
 .hero .ciel .gravure { width: 100%; margin: 0; opacity: .75; }
@@ -329,7 +331,6 @@ body.avec-action .page { padding-bottom: 130px; }
 /* ---------- Fin : sortie ---------- */
 .sortie {
   position: relative; overflow: hidden;
-  display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start;
   background: var(--encre); color: var(--papier);
   padding: 24px 20px 40px; border-radius: var(--r-lg);
 }
@@ -337,7 +338,6 @@ body.avec-action .page { padding-bottom: 130px; }
 .sortie .label { color: #e2c48a; }
 .sortie .muted { color: var(--papier); opacity: .8; }
 .sortie .registre { color: #e2c48a; font-weight: 500; }
-.fleche { width: 44px; height: 44px; color: #e2c48a; }
 .vagues { position: absolute; left: 0; bottom: 10px; width: 200%; height: 18px; color: rgba(251, 248, 241, .3); }
 
 /* ---------- Animations des pages visiteur (.revele, posé par cadre()) ---------- */
@@ -357,12 +357,18 @@ body.avec-action .page { padding-bottom: 130px; }
 .revele .activites .activite { animation: apparait .45s ease both; animation-delay: calc(.4s + min(var(--i), 5) * 70ms); }
 .revele .activite .cachet { animation: frappe .4s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(.65s + min(var(--i), 5) * 70ms); }
 
-/* Fin : la flèche montre la porte, les vagues roulent, la gravure s'imprime. */
-.revele .sortie .fleche { animation: pousse 1.6s ease-in-out 1s infinite; }
-@keyframes pousse { 50% { transform: translateX(6px); } }
+/* Fin : les blocs apparaissent au défilement (.defile → .vu), les vagues roulent, la gravure s'imprime. */
+.defile { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .2, 1); }
+.defile.vu { opacity: 1; transform: none; }
+.revele .page > .defile, .revele .activites .activite.defile { animation: none; }
+.defile:not(.vu) .cachet { animation: none; opacity: 0; }
+.defile .cachet.anim, .revele .defile .activite .cachet, .revele .activite.defile .cachet { animation-delay: .3s; }
+.gravure.fin.defile { transform: none; transition: opacity .6s ease; }
+.gravure.fin.defile.vu { opacity: .75; }
+.revele .gravure.fin.defile:not(.vu) { animation-play-state: paused; }
 .revele .vagues { animation: houle 9s linear infinite; }
 @keyframes houle { to { transform: translateX(-50%); } }
-.revele .gravure.fin { -webkit-mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; animation: imprime 1.8s cubic-bezier(.4, 0, .2, 1) .6s forwards; }
+.revele .gravure.fin { -webkit-mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; animation: imprime 1.8s cubic-bezier(.4, 0, .2, 1) .2s forwards; }
 
 /* Scanner : le viseur s'ouvre, une ligne balaie le cadre. */
 .revele .viseur { animation: vise .5s cubic-bezier(.2, 1.2, .4, 1) both; }
@@ -377,6 +383,7 @@ body.avec-action .page { padding-bottom: 130px; }
 
 @media (prefers-reduced-motion: reduce) {
   .revele .gravure.fin { -webkit-mask: none; mask: none; }
+  .defile, .defile:not(.vu) .cachet { opacity: 1; transform: none; }
   .viseur::after { display: none; }
 }
 

@@ -304,6 +304,15 @@
       <main class="page">${contenu}</main>`;
     window.scrollTo(0, 0);
   }
+  /* Les éléments apparaissent au fur et à mesure qu'on les fait défiler à l'écran. */
+  function defilement(selecteur) {
+    const els = document.querySelectorAll(selecteur);
+    if (!('IntersectionObserver' in window)) return;
+    const obs = new IntersectionObserver(entrees => entrees.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('vu'); obs.unobserve(e.target); }
+    }), { rootMargin: '0px 0px -12% 0px' });
+    els.forEach(el => { el.classList.add('defile'); obs.observe(el); });
+  }
   function chargement() { cadre('<p class="muted">Ouverture du dossier…</p>'); }
   function panne(e) {
     console.error(e);
@@ -315,7 +324,6 @@
 
   /* ================= Écrans visiteur ================= */
   const ICO_SCAN = '<svg class="ico-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 12h18"/></svg>';
-  const ICO_FLECHE = '<svg class="fleche" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20.5" stroke-width="1.25"/><path d="M12 22h20M25 15l7 7-7 7"/></svg>';
   const VAGUES = `<svg class="vagues" viewBox="0 0 800 18" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 6${' q12.5 -6 25 0 t25 0'.repeat(16)}"/><path d="M0 14${' q12.5 -6 25 0 t25 0'.repeat(16)}"/></svg>`;
   const GRAVURE = '<img class="gravure" src="img/gravure.png" alt="" width="620" height="552">';
 
@@ -564,7 +572,6 @@
         try {
           const nb = (await db.scans(v.id)).filter(activite).length;
           await db.maj(v.id, { niveau: niveauPour(nb).id, termine_at: new Date().toISOString() });
-          store.set('forcats.anim', '1', sessionStorage);
           aller('fin');
         } catch (e2) { panne(e2); }
       };
@@ -655,7 +662,6 @@
     if (!v.niveau) return aller('parcours');
     const faites = (await db.scans(v.id)).map(activite).filter(Boolean);
     const nv = niveau(v.niveau) || niveauPour(faites.length);
-    const anim = store.get('forcats.anim', sessionStorage); store.set('forcats.anim', null, sessionStorage);
     cadre(`
       <section class="stack centre">
         <p class="label">Parcours terminé</p>
@@ -663,7 +669,6 @@
         <p class="registre muted">MATRICULE #${esc(v.matricule)}</p>
       </section>
       <section class="sortie">
-        ${ICO_FLECHE}
         <div class="stack-sm">
           <p class="label">Dernière étape</p>
           <h2>Direction la porte arrière</h2>
@@ -674,7 +679,7 @@
       </section>
       <section class="feuille centre">
         <p class="muted small">Avec ${pluriel(faites.length, 'activité')}, ton niveau au bagne :</p>
-        ${cachet(`${nv.nom} · ${nv.nom} ·`, nv.titre, `${faites.length} / ${C.activites.length}`, `grand ${anim ? 'anim' : ''}`)}
+        ${cachet(`${nv.nom} · ${nv.nom} ·`, nv.titre, `${faites.length} / ${C.activites.length}`, 'grand anim')}
         <h2>${esc(nv.nom)}</h2>
         <p class="muted">${esc(nv.description)}</p>
       </section>
@@ -683,6 +688,7 @@
         ${faites.length ? `<ul class="activites compact">${faites.map((a, i) => `<li class="activite ok" style="--i: ${i}"><h3>${esc(a.nom)}</h3>${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span></li>`).join('')}</ul>` : '<p class="muted">Aucune activité validée.</p>'}
       </section>
       ${GRAVURE.replace('class="gravure"', 'class="gravure fin"')}`, { mat: v.matricule });
+    defilement('.page > .sortie, .page > .feuille, .titre-ligne, .activites .activite, .gravure.fin');
   }
 
   /* ================= Espace équipe ================= */

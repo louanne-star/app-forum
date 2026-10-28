@@ -31,7 +31,7 @@ window.FORUM_CONFIG = {
 
   /* ---------- 7. Les niveaux (selon le nombre d'activités faites) ----------
      min         : nombre d'activités validées pour atteindre ce niveau
-     titre       : le niveau en clair (débutant, intermédiaire…)
+     titre       : le niveau en clair, en mots d'époque (apprenti, compagnon, maître)
      nom         : le grade au bagne
      description : petit texte affiché au visiteur à la fin
      Le visiteur reçoit le niveau le plus haut qu'il a atteint.
@@ -40,21 +40,21 @@ window.FORUM_CONFIG = {
     {
       id: 'classe3',
       min: 3,
-      titre: 'Débutant',
+      titre: 'Apprenti',
       nom: 'Forçat de 3e classe',
       description: "Tout juste débarqué à l'île Nou, tu découvres la vie du bagne. Les surveillants t'ont à l'œil : encore un peu d'expérience et tu monteras en classe."
     },
     {
       id: 'classe2',
       min: 6,
-      titre: 'Intermédiaire',
+      titre: 'Compagnon',
       nom: 'Forçat de 2e classe',
       description: "Tu connais les chantiers, les règles et les recoins du pénitencier. Ta bonne conduite commence à se remarquer."
     },
     {
       id: 'classe1',
       min: 9,
-      titre: 'Maîtrise',
+      titre: 'Maître',
       nom: 'Forçat de 1re classe',
       description: "Plus rien du bagne n'a de secret pour toi. Les forçats de 1re classe avaient droit à des faveurs : tu les as bien méritées."
     }

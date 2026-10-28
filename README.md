@@ -22,7 +22,7 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 2. **config.js** : coller `supabaseUrl` et `supabaseAnonKey` (*Project Settings → API*, clé `anon public`).
 3. **Netlify** : glisser le dossier sur app.netlify.com/drop. Mettre l'adresse obtenue dans `baseUrl` (config.js) puis redéployer.
 4. **Activités** : remplacer les exemples dans `config.js` (nom + description).
-5. **Niveaux** : ajuster les `min` des 3 niveaux (Débutant, Intermédiaire, Maîtrise) selon le nombre réel d'activités.
+5. **Niveaux** : ajuster les `min` des 3 niveaux (Apprenti, Compagnon, Maître) selon le nombre réel d'activités.
 6. **QR codes** : ouvrir `<adresse>/#/equipe/qr` et imprimer la page (Ctrl/Cmd + P). Un QR pour l'entrée, un par activité.
 
 ⚠ Ne change plus l'`id` d'une activité une fois ses QR codes imprimés.
