@@ -71,15 +71,6 @@
       return await new Promise((ok, ko) => c.toBlob(b => b ? ok(b) : ko(new Error('toBlob')), 'image/jpeg', 0.85));
     } finally { URL.revokeObjectURL(url); }
   }
-  async function telechargerPhoto(url, nomFichier) {
-    try {
-      const blob = await (await fetch(url)).blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = nomFichier;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    } catch (e) { console.error(e); window.open(url, '_blank'); }
-  }
   /* ================= Carte matricule ================= */
   /* Positions mesurées sur le modèle Canva (carte/recto.png, 1050 × 600 px = 88,9 × 50,8 mm). */
   const CARTE = {
@@ -843,7 +834,6 @@
           ${v.imprime
             ? `<button class="btn btn-ok btn-sm" data-act="imprime" data-id="${v.id}" data-val="0">Imprimée · remettre dans la file</button>`
             : `<button class="btn btn-discret btn-sm" data-act="imprime" data-id="${v.id}" data-val="1">Marquer imprimée</button>`}
-          <button class="btn btn-discret btn-sm" data-act="carte-dl" data-id="${v.id}">Télécharger la carte</button>
         </div>
       </article>`;
     }
@@ -863,11 +853,6 @@
       const b = e.target.closest('[data-act]');
       if (!b) return;
       const v = donnees.find(x => x.id === b.dataset.id); if (!v) return;
-      if (b.dataset.act === 'carte-dl') {
-        try { telechargerPhoto(await imageCarte(v), `carte-${v.matricule}-${norm(v.nom)}.png`.replace(/[^a-z0-9.-]+/g, '-')); }
-        catch (err) { console.error(err); toast('Carte impossible à préparer, vérifie le réseau'); }
-        return;
-      }
       b.disabled = true;
       try {
         await db.maj(v.id, { imprime: b.dataset.val === '1' });
