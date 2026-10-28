@@ -293,6 +293,7 @@
   function cadre(contenu, { mat = '', equipe = false } = {}) {
     document.body.classList.toggle('equipe', equipe);
     document.body.classList.remove('avec-action');
+    app.classList.toggle('revele', !equipe);  // animations d'entrée des pages visiteur
     document.title = TITRE;
     app.innerHTML = `
       <header class="bandeau"><div class="bandeau-in">
@@ -315,7 +316,7 @@
   /* ================= Écrans visiteur ================= */
   const ICO_SCAN = '<svg class="ico-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 12h18"/></svg>';
   const ICO_FLECHE = '<svg class="fleche" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20.5" stroke-width="1.25"/><path d="M12 22h20M25 15l7 7-7 7"/></svg>';
-  const VAGUES = `<svg class="vagues" viewBox="0 0 400 18" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 6${' q12.5 -6 25 0 t25 0'.repeat(8)}"/><path d="M0 14${' q12.5 -6 25 0 t25 0'.repeat(8)}"/></svg>`;
+  const VAGUES = `<svg class="vagues" viewBox="0 0 800 18" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 6${' q12.5 -6 25 0 t25 0'.repeat(16)}"/><path d="M0 14${' q12.5 -6 25 0 t25 0'.repeat(16)}"/></svg>`;
   const GRAVURE = '<img class="gravure" src="img/gravure.png" alt="" width="620" height="552">';
 
   /* Cachet de la poste : texte en couronne, mot au centre, petite ligne dessous. */
@@ -396,8 +397,7 @@
       store.set(K_BIENVENUE, '1', sessionStorage);
       app.classList.add('revele');  // la page, cachée derrière la popup, apparaît
     });
-    if (!store.get(K_BIENVENUE, sessionStorage)) bienvenue.showModal();
-    else app.classList.add('revele');
+    if (!store.get(K_BIENVENUE, sessionStorage)) { app.classList.remove('revele'); bienvenue.showModal(); }
 
     const f = document.getElementById('f'), err = document.getElementById('err');
     const mat = document.getElementById('matricule'), apercu = document.getElementById('apercu');
@@ -523,7 +523,7 @@
         <h2>Ton carnet de <em>timbres</em></h2>
         <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Chacune te rapporte un timbre : plus ton carnet se remplit, plus ton grade monte au bagne.</p>
         <div class="timbres carnet" style="--cols: ${Math.ceil(total / 2)}" role="img" aria-label="${n} timbres sur ${total}">
-          ${Array.from({ length: total }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''} ${C.niveaux.some(nv => nv.min === i + 1) ? 'palier' : ''}"><span>${i + 1}</span></span>`).join('')}
+          ${Array.from({ length: total }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''} ${C.niveaux.some(nv => nv.min === i + 1) ? 'palier' : ''}" style="--i: ${i}"><span>${i + 1}</span></span>`).join('')}
         </div>
         ${n < min ? `<p class="small"><b>Il faut faire au moins ${pluriel(min, 'activité')} pour terminer ton parcours.</b></p>` : ''}
       </section>
@@ -531,7 +531,7 @@
       <section class="stack">
         <div class="titre-ligne"><h2><i class="point" aria-hidden="true">•</i>Activités</h2><span class="registre muted small">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
         <ul class="activites">
-          ${C.activites.map((a, i) => `<li class="activite ${faites.has(a.id) ? 'ok' : ''}">
+          ${C.activites.map((a, i) => `<li class="activite ${faites.has(a.id) ? 'ok' : ''}" style="--i: ${i}">
             <h3>${esc(a.nom)}</h3>
             <p class="desc">${esc(a.description)}</p>
             ${faites.has(a.id) ? `${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span>` : '<span class="a-voir">À découvrir</span>'}
@@ -671,7 +671,7 @@
       </section>
       <section class="stack">
         <div class="titre-ligne"><h2>Ton <em>itinéraire</em></h2><span class="registre muted small">${faites.length} / ${C.activites.length}</span></div>
-        ${faites.length ? `<ul class="activites compact">${faites.map(a => `<li class="activite ok"><h3>${esc(a.nom)}</h3>${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span></li>`).join('')}</ul>` : '<p class="muted">Aucune activité validée.</p>'}
+        ${faites.length ? `<ul class="activites compact">${faites.map((a, i) => `<li class="activite ok" style="--i: ${i}"><h3>${esc(a.nom)}</h3>${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span></li>`).join('')}</ul>` : '<p class="muted">Aucune activité validée.</p>'}
       </section>
       ${GRAVURE.replace('class="gravure"', 'class="gravure fin"')}`, { mat: v.matricule });
   }

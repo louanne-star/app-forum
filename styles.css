@@ -137,7 +137,7 @@ html:has(.popup[open]), html:has(.popup[open]) body { overflow: hidden; } /* la 
 @keyframes voile { from { opacity: 0; } }
 @keyframes apparait { from { opacity: 0; transform: translateY(10px); } }
 /* Fermeture : la page, cachée derrière, apparaît élément par élément. */
-.revele .bandeau, .revele .page > :not(dialog) { animation: apparait .5s ease both; }
+.revele:has(.hero) .bandeau, .revele .page > :not(dialog) { animation: apparait .5s ease both; }
 .revele .page > :nth-child(2) { animation-delay: .12s; }
 .revele .page > :nth-child(3) { animation-delay: .24s; }
 .revele .page > :nth-child(4) { animation-delay: .36s; }
@@ -338,7 +338,43 @@ body.avec-action .page { padding-bottom: 130px; }
 .sortie .muted { color: var(--papier); opacity: .8; }
 .sortie .registre { color: #e2c48a; font-weight: 500; }
 .fleche { width: 44px; height: 44px; color: #e2c48a; }
-.vagues { position: absolute; left: 0; right: 0; bottom: 10px; width: 100%; height: 18px; color: rgba(251, 248, 241, .3); }
+.vagues { position: absolute; left: 0; bottom: 10px; width: 200%; height: 18px; color: rgba(251, 248, 241, .3); }
+
+/* ---------- Animations des pages visiteur (.revele, posé par cadre()) ---------- */
+/* Activité validée : le tampon frappe, la carte encaisse le choc, puis le texte monte. */
+.revele .feuille.centre:has(> .cachet.anim) { animation: apparait .4s ease both, choc .35s ease-out .62s; }
+.revele .feuille.centre > .cachet.anim { animation-delay: .3s; }
+.revele .feuille.centre:has(> .cachet) > :not(.cachet) { animation: apparait .5s ease both; }
+.revele .feuille.centre:has(> .cachet) > :nth-child(2) { animation-delay: .75s; }
+.revele .feuille.centre:has(> .cachet) > :nth-child(3) { animation-delay: .87s; }
+.revele .feuille.centre:has(> .cachet) > :nth-child(4) { animation-delay: .99s; }
+.revele .feuille.centre:has(> .cachet.anim) + .panneau { animation-delay: 1.15s; }
+@keyframes choc { 30% { transform: translateY(3px) scale(.985); } 60% { transform: translateY(-1px); } }
+
+/* Parcours : les timbres se posent un à un dans le carnet, puis les activités défilent. */
+.revele .carnet .timbre { animation: pose .4s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(.3s + var(--i) * 45ms); }
+@keyframes pose { from { opacity: 0; transform: translateY(-8px) rotate(-8deg) scale(.7); } }
+.revele .activites .activite { animation: apparait .45s ease both; animation-delay: calc(.4s + min(var(--i), 5) * 70ms); }
+.revele .activite .cachet { animation: frappe .4s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(.65s + min(var(--i), 5) * 70ms); }
+
+/* Fin : la flèche montre la porte, les vagues roulent, la gravure s'imprime. */
+.revele .sortie .fleche { animation: pousse 1.6s ease-in-out 1s infinite; }
+@keyframes pousse { 50% { transform: translateX(6px); } }
+.revele .vagues { animation: houle 9s linear infinite; }
+@keyframes houle { to { transform: translateX(-50%); } }
+.revele .gravure.fin { -webkit-mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; animation: imprime 1.8s cubic-bezier(.4, 0, .2, 1) .6s forwards; }
+
+/* Scanner : le viseur s'ouvre, une ligne balaie le cadre. */
+.revele .viseur { animation: vise .5s cubic-bezier(.2, 1.2, .4, 1) both; }
+@keyframes vise { from { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
+.viseur::after { content: ''; position: absolute; left: 8%; right: 8%; top: 8%; height: 2px; border-radius: 2px; background: #e2c48a; box-shadow: 0 0 12px #e2c48a; animation: balaie 2.2s ease-in-out .5s infinite alternate; }
+@keyframes balaie { to { top: 92%; } }
+.revele .page > .scanner { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .revele .gravure.fin { -webkit-mask: none; mask: none; }
+  .viseur::after { display: none; }
+}
 
 /* ---------- Confirmation intégrée ---------- */
 .confirm { border: 1px solid var(--encre); border-radius: var(--r-md); padding: 18px; display: flex; flex-direction: column; gap: 14px; background: var(--papier); }
