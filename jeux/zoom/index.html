@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Plein cadre</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,8 +41,6 @@ button{font:inherit;color:inherit}
 .top-right{display:flex;align-items:center;gap:16px}
 .pts{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .pts b{background:var(--cream);color:var(--navy);border-radius:999px;padding:3px 12px}
-.btn-quit{height:44px;padding:0 20px;border-radius:22px;border:2px solid #fff;background:transparent;color:#fff;font-weight:800;cursor:pointer}
-.btn-quit:hover{background:rgba(255,255,255,.12)}
 @media (max-width:560px){.logo-sub{display:none}.pts span{display:none}}
 
 .app{position:relative;z-index:10;flex:1;min-height:0;width:100%;max-width:1400px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;
@@ -132,6 +135,10 @@ button{font:inherit;color:inherit}
   .teaser,.teaser .img{animation:none}
 }
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=EB+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap">
+<link rel="stylesheet" href="../charte-pendu.css">
+</head>
+<body>
 
 <svg class="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
   <defs>
@@ -180,7 +187,6 @@ button{font:inherit;color:inherit}
     </div>
     <div class="top-right">
       <div class="pts" id="pts" hidden><span>Score</span><b id="ptsVal">0</b></div>
-      <button class="btn-quit" id="btnHome" type="button" hidden>Quitter</button>
     </div>
   </div>
 </header>
@@ -273,7 +279,7 @@ button{font:inherit;color:inherit}
   $('#teaserImg').innerHTML = visOf(ROUNDS[0]);
 
   function shuffle(a){ a = a.slice(); for (let j = a.length - 1; j > 0; j--){ const k = Math.floor(Math.random() * (j + 1)); [a[j], a[k]] = [a[k], a[j]]; } return a; }
-  function show(s){ [start, play, end].forEach(x => x.hidden = x !== s); $('#pts').hidden = s !== play; $('#btnHome').hidden = s === start; }
+  function show(s){ [start, play, end].forEach(x => x.hidden = x !== s); $('#pts').hidden = s !== play; }
 
   function setZoom(z, f, instant){
     const clamp = (v, z) => Math.min(0, Math.max((1 - z) * 100, v));
@@ -285,6 +291,7 @@ button{font:inherit;color:inherit}
   }
 
   function newGame(){
+    parent.postMessage('debut', '*'); // tablette du stand : recache les boutons de l'équipe
     order = shuffle(ROUNDS); r = 0; score = 0; results = [];
     $('#ptsVal').textContent = '0';
     show(play);
@@ -325,6 +332,7 @@ button{font:inherit;color:inherit}
     if (!ok && level < LEVELS.length - 1){
       btn.disabled = true;
       btn.classList.add('bad');
+      SONS.jouer('mauvaise');
       if (!reduce) btn.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}], {duration:300});
       level++;
       setZoom((q.levels || LEVELS)[level], q.focus);
@@ -333,6 +341,7 @@ button{font:inherit;color:inherit}
     }
     done = true;
     const pts = ok ? 3 - level : 0;
+    SONS.jouer(ok ? 'bonne' : 'mauvaise');
     score += pts;
     results.push({q, pts});
     $('#ptsVal').textContent = score;
@@ -372,11 +381,16 @@ button{font:inherit;color:inherit}
         '<span class="rc-pts' + (x.pts ? '' : ' zero') + '">' + (x.pts ? '+' + x.pts + ' pt' + (x.pts > 1 ? 's' : '') : '0 pt') + '</span></div><p>' + x.q.info + '</p></div></article>').join('') + '</div></div>';
     show(end);
     end.scrollTop = 0;
+    SONS.fin(score, t);
+    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
     $('#btnAgain').addEventListener('click', newGame);
     $('#btnBack').addEventListener('click', () => show(start));
   }
 
   $('#btnStart').addEventListener('click', newGame);
-  $('#btnHome').addEventListener('click', () => show(start));
 })();
 </script>
+<script src="../sons.js" data-sans-clic=".ans"></script>
+<script src="../quitter.js" data-dans=".top-right"></script>
+</body>
+</html>

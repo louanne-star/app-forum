@@ -9,7 +9,7 @@
 <title>L'Évasion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Andika:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Cinzel:wght@700;800&family=EB+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -50,15 +50,6 @@
       <p class="surtitre">Bagne de l'île Nou · Nouvelle-Calédonie</p>
       <h1 class="titre-pinceau" id="intro-titre"></h1>
       <p class="texte" id="intro-texte"></p>
-      <div class="rangee-ctas">
-        <button class="btn-cta" type="button" aria-expanded="false" aria-controls="regles"><span aria-hidden="true">❓</span> Comment jouer ?</button>
-      </div>
-      <ul class="panneau regles" id="regles" hidden>
-        <li><span aria-hidden="true">⚠️</span> Un mauvais choix, et c'est le retour au bagne.</li>
-        <li><span aria-hidden="true">🎒</span> Tes préparatifs vont dans ton sac.</li>
-        <li><span aria-hidden="true">🪢</span> Une icône sur une carte = l'objet qu'il te faut.</li>
-        <li><span aria-hidden="true">💬</span> Touche un mot souligné pour l'expliquer.</li>
-      </ul>
       <button class="btn-pinceau" id="btn-commencer" type="button">Commencer l'évasion <span aria-hidden="true">→</span></button>
     </div>
   </section>
@@ -91,10 +82,8 @@
   <section class="ecran ecran-fin" id="ecran-fin" hidden>
     <div class="parchemin parchemin-fin">
       <p class="surtitre" id="fin-surtitre"></p>
-      <p class="nouvelle-fin" id="fin-nouvelle" hidden>★ Nouvelle fin découverte !</p>
       <h2 class="titre-pinceau" id="fin-titre"></h2>
       <p class="texte" id="fin-texte"></p>
-      <p class="collection" id="fin-collection"></p>
 
       <!-- Le reste s'ouvre à la demande -->
       <div class="rangee-ctas">
@@ -130,6 +119,17 @@
   </div>
 </div>
 
+<!-- Comment jouer : affiché à l'ouverture du jeu -->
+<div class="voile" id="popup-regles">
+  <div class="scene-popup">
+    <section class="parchemin parchemin-popup" role="dialog" aria-modal="true" aria-labelledby="regles-titre">
+      <h2 class="titre-pinceau" id="regles-titre">Comment jouer ?</h2>
+      <p class="texte">À chaque étape, choisis une carte. Ce que tu prépares va dans ton sac : certaines cartes demandent un objet précis. Un mauvais choix, et c'est le retour au bagne !</p>
+      <button class="btn-pinceau" id="btn-regles-ok" type="button">C'est parti <span aria-hidden="true">→</span></button>
+    </section>
+  </div>
+</div>
+
 <!-- Confirmation pour quitter -->
 <div class="voile" id="popup-quitter" hidden>
   <div class="scene-popup">
@@ -157,5 +157,6 @@
 <script src="js/donnees.js"></script>
 <script src="js/son.js"></script>
 <script src="js/jeu.js"></script>
+<script src="../quitter.js" data-style="top:max(calc(var(--u)*32),env(safe-area-inset-top,0px));right:calc(var(--u)*118);height:max(44px,calc(var(--u)*66))"></script>
 </body>
 </html>

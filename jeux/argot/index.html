@@ -268,7 +268,7 @@ function show(name){
   $("bga").classList.toggle("hide", name!=="A");
   $("bgd").classList.toggle("hide", name!=="D");
 }
-function start(){ i=0; score=0; res=[]; show("Q"); load(); }
+function start(){ parent.postMessage('debut', '*'); /* tablette du stand : recache les boutons de l'équipe */ i=0; score=0; res=[]; show("Q"); load(); }
 function dots(){
   $("dots").innerHTML = Q.map((_,k)=>`<i class="${res[k]===1?"ok":res[k]===0?"ko":k===i?"cur":""}"></i>`).join("");
 }
@@ -299,6 +299,7 @@ function validate(){
   document.querySelectorAll(".rep").forEach(b=>{ if(b.dataset.c==="true") b.classList.add("good"); });
   if(!good) sel.classList.add("bad");
   if(good){ score+=100; res[i]=1; } else res[i]=0;
+  SONS.jouer(good ? 'bonne' : 'mauvaise');
   $("score").textContent=`${score} pts`; dots();
   $("b5050").disabled=true; $("bIndice").disabled=true; $("bValider").disabled=true;
   setTimeout(()=>{
@@ -320,6 +321,8 @@ function end(){
   $("fScore").textContent=`${score} / ${Q.length*100}`;
   $("fRang").textContent=r[1]; $("fMsg").textContent=r[2];
   show("D");
+  SONS.fin(score, Q.length * 100);
+  parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
 }
 $("bStart").onclick=start; $("bRestart").onclick=start;
 $("bValider").onclick=validate; $("bNext").onclick=next;
@@ -348,5 +351,7 @@ $("stage").classList.add("has-img");
 $("stage").classList.add("has-parch");
 
 </script>
+<script src="../sons.js" data-sans-clic="#bValider"></script>
+<script src="../quitter.js"></script>
 </body>
 </html>

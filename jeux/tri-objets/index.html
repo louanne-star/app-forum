@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Inventaire</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,8 +49,6 @@ button{font:inherit;color:inherit}
 .progress{display:flex;align-items:center;gap:10px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .bar{width:clamp(60px,12vw,150px);height:6px;border-radius:3px;background:var(--petrole);overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--cream);border-radius:inherit;transition:width .35s}
-.btn-quit{height:44px;padding:0 20px;border-radius:22px;border:2px solid #fff;background:transparent;color:#fff;font-weight:800;cursor:pointer}
-.btn-quit:hover{background:rgba(255,255,255,.12)}
 @media (max-width:560px){.logo-sub{display:none}.bar{display:none}}
 
 .app{position:relative;z-index:10;flex:1;min-height:0;width:100%;max-width:1400px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;
@@ -183,6 +186,10 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
   .crate,.bar i,.btn,.hero-row .q svg,.hero-row .q img{transition:none}
 }
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=EB+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap">
+<link rel="stylesheet" href="../charte-pendu.css">
+</head>
+<body>
 
 <svg class="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
   <defs>
@@ -241,7 +248,6 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
     </div>
     <div class="top-right">
       <div class="progress" id="progress" hidden><span id="progText">1 / 12</span><div class="bar"><i id="progBar"></i></div></div>
-      <button class="btn-quit" id="btnHome" type="button" hidden>Quitter</button>
     </div>
   </div>
 </header>
@@ -399,10 +405,10 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
   function show(screen){
     [start, play, end].forEach(s => s.hidden = s !== screen);
     $('#progress').hidden = screen !== play;
-    $('#btnHome').hidden = screen === start;
   }
 
   function newGame(){
+    parent.postMessage('debut', '*'); // tablette du stand : recache les boutons de l'équipe
     deck = shuffle(OBJETS).slice(0, PER_GAME);
     i = 0; answers = []; busy = false; counts = LIEUX.map(() => 0);
     crates.forEach(el => { const c = el.querySelector('.count'); c.hidden = true; c.textContent = '0'; });
@@ -449,6 +455,7 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
     const o = deck[i];
     answers.push({o, chosen:LIEUX[k].id});
     fly(crates[k]).then(() => {
+      SONS.jouer('pose');
       counts[k]++;
       const c = crates[k].querySelector('.count');
       c.textContent = counts[k]; c.hidden = false;
@@ -542,6 +549,8 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
       (good.length ? '<div class="grid">' + good.map(a => item(a, true)).join('') + '</div>' : '<div class="empty">Pas encore d\'objet bien rangé. À la prochaine partie !</div>') + '</section></div>';
     show(end);
     end.scrollTop = 0;
+    SONS.fin(good.length, t);
+    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
     $('#btnAgain').addEventListener('click', newGame);
     $('#btnBack').addEventListener('click', () => show(start));
     $('#btnAgain').focus();
@@ -555,6 +564,9 @@ kbd{font-family:var(--font-ui);font-size:12px;font-weight:800;padding:1px 6px;bo
   }
   $('#consigneToggle').addEventListener('click', () => setConsigne($('#consigne').classList.contains('closed')));
   $('#btnStart').addEventListener('click', newGame);
-  $('#btnHome').addEventListener('click', () => { busy = false; drag = null; show(start); });
 })();
 </script>
+<script src="../sons.js"></script>
+<script src="../quitter.js" data-dans=".top-right"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+/* ==========================================================
+   Charte du « Pendu du Bagne » pour Inventaire, Plein cadre et Bout à bout.
+   Chargée après le <style> du jeu : polices Cinzel / EB Garamond, plaques bleu nuit
+   à filet doré, parchemin roulé et tuiles du Pendu (images de jeux/guillotine/assets).
+   Mise en page et fonctionnement des jeux inchangés.
+   Pour revenir au style d'origine : retirer la ligne <link …charte-pendu.css> du jeu.
+   ========================================================== */
+:root{
+  --p-marine:#16263d; --p-creme:#f1e3bf; --p-or:#c99b4b; --p-brune:#3a2614; --p-sang:#9e2a1c; --p-vert:#4f6f3a;
+  --p-titre:"Cinzel","Trajan Pro",Georgia,"Times New Roman",serif;
+  --font-ui:"EB Garamond",Garamond,Georgia,"Times New Roman",serif;
+  --navy:#16263d; --ink:#3a2614; --muted:#5a4630; --cream:#f1e3bf; --paper:#f6ecd2;
+  --gold:#9e2a1c; --good:#4f6f3a; --bad:#9e2a1c;
+}
+body{font-size:17px;font-variant-numeric:lining-nums}
+
+/* ---------- Bandeau du haut : plaque bleu nuit à filet doré ---------- */
+.topbar{background:var(--p-marine);border-bottom:3px double var(--p-or);box-shadow:0 6px 16px rgba(0,0,0,.45)}
+.logo-title{font-family:var(--p-titre);font-weight:800;font-size:clamp(22px,2.6vw,30px);letter-spacing:.06em;color:var(--p-creme)}
+.logo-sub{font-family:var(--p-titre);font-weight:700;font-size:11px;letter-spacing:.24em;color:var(--p-or);opacity:1}
+.pts,.progress{font-family:var(--p-titre);font-weight:700;color:var(--p-creme);font-variant-numeric:lining-nums tabular-nums}
+.pts b{background:transparent;color:var(--p-creme);border:2px solid var(--p-or)}
+.bar{background:rgba(241,227,191,.25)}
+.bar i{background:var(--p-or)}
+
+/* ---------- Panneaux : le parchemin roulé du Pendu (découpé en 9 morceaux, il s'adapte à toutes les tailles) ---------- */
+.panel,.consigne{
+  background:none;border-style:solid;border-radius:0;box-shadow:none;
+  border-width:34px 22px 46px 22px;
+  border-image:url("guillotine/assets/parchemin.webp") 120 75 165 70 fill / 34px 22px 46px 22px stretch;
+  filter:drop-shadow(0 12px 22px rgba(0,0,0,.55));
+  color:var(--p-brune);
+}
+.consigne{border-width:22px 16px 30px 16px;border-image-width:22px 16px 30px 16px}
+.feedback,.rc,.res,.step{background:rgba(255,248,230,.55);border:1.5px solid rgba(201,155,75,.7);box-shadow:none}
+.feedback{border-left:4px solid var(--p-or)}
+.step b,.rules b{background:var(--p-marine);color:var(--p-creme);border:2px solid var(--p-or);font-family:var(--p-titre)}
+
+/* ---------- Titres en Cinzel ---------- */
+.start h1,.side h2,.score,.section-title,.rc-name,.res-name,.feedback .verdict{font-family:var(--p-titre);font-weight:800;letter-spacing:.04em;color:var(--p-marine)}
+.start h1{font-size:clamp(36px,5.4vw,62px);line-height:1.05}
+.side h2{font-size:clamp(22px,2.4vw,30px)}
+.score{letter-spacing:0;font-variant-numeric:lining-nums tabular-nums}
+.verdict,.end-verdict{font-family:var(--font-ui);font-style:italic;font-weight:600;font-size:clamp(21px,2.2vw,26px);color:var(--p-brune)}
+.feedback .verdict.ok{color:var(--p-vert)}
+.feedback .verdict.ko{color:var(--p-sang)}
+.eyebrow{font-family:var(--p-titre);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--p-sang)}
+.lede{font-family:var(--font-ui);font-style:italic;font-size:clamp(19px,2vw,22px);color:var(--p-brune)}
+.worth,.info,.rc p,.feedback p,.consigne p{color:var(--p-brune)}
+.consigne-head{font-family:var(--p-titre);font-weight:700;color:var(--p-marine)}
+.section-title span{font-family:var(--font-ui);color:var(--muted)}
+
+/* ---------- Boutons : la plaque bleu nuit à rivets dorés du Pendu ---------- */
+.btn{border-radius:0;font-family:var(--p-titre);font-weight:700;letter-spacing:.06em;transition:transform .1s,filter .2s}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:url("guillotine/assets/cartouche.webp") center/100% 100% no-repeat;color:var(--p-creme);box-shadow:none;padding:0 40px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4))}
+.btn-ghost{background:var(--p-creme);color:var(--p-marine);border:2px solid var(--p-or);border-radius:999px;box-shadow:0 3px 6px rgba(0,0,0,.25)}
+.btn-validate:disabled{filter:grayscale(1) brightness(.8)}
+
+/* ---------- Plein cadre : réponses sur plaques, loupe ---------- */
+.ans{background:url("guillotine/assets/cartouche.webp") center/100% 100% no-repeat;color:var(--p-creme);border:0;border-radius:0;
+  font-family:var(--font-ui);font-weight:600;font-size:18px;padding:10px 30px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));box-shadow:none}
+.ans:hover:not(:disabled){box-shadow:none;filter:brightness(1.2) drop-shadow(0 3px 4px rgba(0,0,0,.35))}
+.ans.good{background:var(--p-vert);border:2px solid var(--p-or);border-radius:14px}
+.ans.bad{background:var(--p-sang);border:2px solid var(--p-or);border-radius:14px}
+.unzoom{background:var(--p-marine);color:var(--p-creme);border:2px solid var(--p-or);font-family:var(--p-titre);font-weight:700}
+.unzoom:hover:not(:disabled){background:var(--p-marine);filter:brightness(1.2)}
+.viewer{border-color:var(--p-creme);box-shadow:0 0 0 3px var(--p-or),0 30px 50px -24px rgba(0,0,0,.7)}
+.zoom-chip{background:var(--p-marine);border:2px solid var(--p-or);font-family:var(--p-titre)}
+
+/* ---------- Bout à bout : images, cases du mot, clavier en tuiles ---------- */
+.tile{border-color:var(--p-creme);box-shadow:0 0 0 2px var(--p-or),0 16px 26px -16px rgba(0,0,0,.6)}
+.slot{background:var(--p-marine);color:var(--p-creme);font-family:var(--p-titre);font-weight:700;border-radius:8px;box-shadow:inset 0 0 0 2px var(--p-or)}
+.slot.cur{box-shadow:inset 0 0 0 3px var(--p-creme),0 0 0 2px var(--p-or)}
+.slot.lock{background:#2b3d55;color:var(--p-creme);box-shadow:inset 0 0 0 2px var(--p-or)}
+.slot.good{background:var(--p-vert);box-shadow:inset 0 0 0 2px var(--p-or)}
+.slot.miss{background:var(--p-sang);box-shadow:inset 0 0 0 2px var(--p-or)}
+.key{background:url("guillotine/assets/tuile.webp") center/100% 100% no-repeat;border:0;box-shadow:none;color:var(--p-marine);
+  font-family:var(--p-titre);font-weight:700;font-size:20px;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.key:active{box-shadow:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.key.wide{background:url("guillotine/assets/tuile.webp") center/100% 100% no-repeat}
+
+/* ---------- Progression : pastilles cerclées d'or ---------- */
+.round-dots{gap:8px}
+.round-dots i{width:14px;height:14px;border-radius:50%;background:transparent;border:2px solid var(--p-or)}
+.round-dots i.done{background:var(--p-marine)}
+.round-dots i.now{width:14px;background:var(--p-or)}
+
+/* ---------- Inventaire : étiquettes de résultat ---------- */
+.tag{font-family:var(--p-titre)}
+.tag.ok{background:rgba(79,111,58,.15);color:#3a5429}
+.tag.bad{background:rgba(158,42,28,.13);color:var(--p-sang)}
+.crate.over::after{border-color:var(--p-or)}

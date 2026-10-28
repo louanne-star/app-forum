@@ -13,10 +13,11 @@
   --sepia:    #6e5130;   /* surtitres, filets (contraste ≥ 4,5:1 sur le parchemin) */
   --rouge:    #9b2f22;   /* « Repéré ! », fin Repris */
   --nuit:     #0d1622;   /* fond de secours */
-  --voile-decor: .35;    /* opacité du voile bleu marine sur les décors (0 = aucun) */
+  --voile-decor: .15;    /* opacité du voile bleu marine sur les décors (0 = aucun) */
 
   --f-pinceau: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
-  --f-texte:   "Andika", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --f-texte:   "EB Garamond", Garamond, Georgia, "Times New Roman", serif;   /* comme le Pendu du Bagne */
+  --f-titre:   "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;    /* gros titres, comme le Pendu */
 
   --u: 1px;              /* remplacé par le JS */
   color-scheme: light;
@@ -84,6 +85,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 /* ---------- Éléments communs ---------- */
 .parchemin {
   position: absolute;
+  aspect-ratio: 1200 / 801;   /* proportions de parchemin.webp : l'image n'est jamais déformée */
   background: url("../assets/ui/parchemin.webp") center / 100% 100% no-repeat;
   filter: drop-shadow(0 calc(var(--u) * 10) calc(var(--u) * 18) rgba(0, 0, 0, .45));
   display: flex;
@@ -92,8 +94,9 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 
 .titre-pinceau {
   margin: 0;
-  font-family: var(--f-pinceau);
-  font-weight: 400;
+  font-family: var(--f-titre);
+  font-weight: 800;
+  letter-spacing: .03em;
   color: var(--marine);
   line-height: 1.05;
   text-wrap: balance;
@@ -253,15 +256,14 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
    ÉCRAN ACCUEIL
    ========================================================== */
 .parchemin-accueil {
-  left: calc(var(--u) * 650);
-  top: calc(var(--u) * 210);
-  width: calc(var(--u) * 800);
-  height: calc(var(--u) * 660);
-  padding: calc(var(--u) * 80) calc(var(--u) * 92) calc(var(--u) * 72);
+  left: calc(var(--u) * 600);
+  top: calc(var(--u) * 205);
+  width: calc(var(--u) * 900);
+  padding: calc(var(--u) * 62) calc(var(--u) * 110) calc(var(--u) * 54);
   gap: calc(var(--u) * 20);
   justify-content: center;
 }
-.parchemin-accueil .titre-pinceau { font-size: calc(var(--u) * 56); }
+.parchemin-accueil .titre-pinceau { font-size: calc(var(--u) * 42); }
 .liste-histoires {
   list-style: none;
   margin: 0;
@@ -309,9 +311,9 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   top: calc(var(--u) * 92);
   width: calc(var(--u) * 460);
   height: calc(var(--u) * 92);
-  font-family: var(--f-pinceau);
-  font-weight: 400;
-  font-size: calc(var(--u) * 58);
+  font-family: var(--f-titre);
+  font-weight: 800;
+  font-size: calc(var(--u) * 42);
   letter-spacing: .02em;
   text-transform: none;
 }
@@ -319,12 +321,11 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   left: calc(var(--u) * 650);
   top: calc(var(--u) * 210);
   width: calc(var(--u) * 800);
-  min-height: calc(var(--u) * 540);   /* grandit quand « Comment jouer ? » est ouvert */
   padding: calc(var(--u) * 64) calc(var(--u) * 92) calc(var(--u) * 56);
   gap: calc(var(--u) * 15);
   justify-content: center;
 }
-.parchemin-intro .titre-pinceau { font-size: calc(var(--u) * 58); }
+.parchemin-intro .titre-pinceau { font-size: calc(var(--u) * 44); }
 .parchemin-intro .texte { font-size: max(16px, calc(var(--u) * 27)); }
 .consigne {
   margin: 0;
@@ -409,13 +410,12 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .parchemin-recit {
   position: relative;
   width: 100%;
-  height: calc(var(--u) * 530);
-  padding: calc(var(--u) * 72) calc(var(--u) * 58) calc(var(--u) * 56) calc(var(--u) * 64);
-  gap: calc(var(--u) * 20);
+  padding: calc(var(--u) * 44) calc(var(--u) * 50) calc(var(--u) * 40) calc(var(--u) * 54);
+  gap: calc(var(--u) * 10);
   justify-content: center;
 }
-.parchemin-recit .titre-pinceau { font-size: calc(var(--u) * 46); }
-.parchemin-recit .texte { font-size: max(15px, calc(var(--u) * 27)); }
+.parchemin-recit .titre-pinceau { font-size: calc(var(--u) * 34); }
+.parchemin-recit .texte { font-size: max(15px, calc(var(--u) * 23)); }
 .question {
   margin: calc(var(--u) * 10) 0 0;
   font-family: var(--f-pinceau);
@@ -574,13 +574,12 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .parchemin-fin {
   position: relative;
   margin: auto calc(var(--u) * 50) auto auto;
-  width: calc(var(--u) * 760);
-  min-height: calc(var(--u) * 600);
-  padding: calc(var(--u) * 84) calc(var(--u) * 84) calc(var(--u) * 72);
+  width: calc(var(--u) * 860);
+  padding: calc(var(--u) * 70) calc(var(--u) * 96) calc(var(--u) * 60);
   gap: calc(var(--u) * 13);
   justify-content: center;
 }
-.parchemin-fin .titre-pinceau { font-size: calc(var(--u) * 60); }
+.parchemin-fin .titre-pinceau { font-size: calc(var(--u) * 44); }
 .parchemin-fin .texte { font-size: max(16px, calc(var(--u) * 25)); }
 .ecran-fin.repris .titre-pinceau { color: var(--rouge); }
 .nouvelle-fin {
@@ -688,7 +687,9 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   position: fixed;
   inset: 0;
   z-index: 20;
-  background: rgba(8, 14, 24, .55);
+  background: rgba(8, 14, 24, .45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);   /* floute le jeu derrière la fenêtre */
   animation: fondu .3s ease both;
 }
 @keyframes fondu { from { opacity: 0; } }
@@ -698,17 +699,16 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .parchemin-popup {
   position: relative;
   margin: auto;
-  width: calc(var(--u) * 720);
-  min-height: calc(var(--u) * 500);
-  padding: calc(var(--u) * 80) calc(var(--u) * 96) calc(var(--u) * 70);
-  gap: calc(var(--u) * 22);
+  width: calc(var(--u) * 1000);
+  padding: calc(var(--u) * 90) calc(var(--u) * 140) calc(var(--u) * 80);
+  gap: calc(var(--u) * 28);
   justify-content: center;
   text-align: center;
   animation: deroule .4s cubic-bezier(.2, .9, .3, 1.2) both;
 }
-.parchemin-popup.petit { min-height: calc(var(--u) * 400); }
 .parchemin-popup .titre-pinceau { font-size: calc(var(--u) * 54); }
-.parchemin-popup .texte { font-size: max(16px, calc(var(--u) * 25)); }
+.parchemin-popup .texte { font-size: max(18px, calc(var(--u) * 33)); }
+.parchemin-popup .btn-pinceau { min-height: calc(var(--u) * 74); padding: 0 calc(var(--u) * 56); font-size: calc(var(--u) * 32); }
 .parchemin-popup.rate .titre-pinceau { color: var(--rouge); }
 .gain {
   margin: 0;
@@ -769,9 +769,9 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .compact .parchemin-intro { height: auto; }
 .compact .entete { position: relative; left: auto; top: auto; transform: none; flex-basis: 100%; }
 .compact .colonne-recit { position: relative; left: auto; top: auto; max-width: 100%; }
-.compact .parchemin-recit { height: auto; min-height: calc(var(--u) * 420); }
+.compact .parchemin-recit { height: auto; }
 .compact .cartes { position: relative; left: auto; top: auto; flex-wrap: wrap; justify-content: center; }
-.compact .parchemin-fin { margin: auto; width: calc(var(--u) * 760); min-height: 0; }
+.compact .parchemin-fin { margin: auto; width: calc(var(--u) * 860); }
 
 .compact .scene-popup {
   inset: 0;

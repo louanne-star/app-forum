@@ -202,6 +202,7 @@
   }
 
   function nouvellePartie() {
+    parent.postMessage('debut', '*'); // tablette du stand : recache les boutons de l'équipe
     etat.file = melanger(MOTS).slice(0, MOTS_PAR_PARTIE);
     etat.motsTrouves = 0;
     etat.indices = INDICES_PAR_PARTIE;
@@ -322,6 +323,7 @@
     }
     $("fin-score").textContent = `Mots trouvés : ${etat.motsTrouves}/${MOTS_PAR_PARTIE}`;
     ouvrir(ecranFin);
+    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
   }
 
   // ---------- Pop-ups ----------

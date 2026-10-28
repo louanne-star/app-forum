@@ -93,10 +93,10 @@ window.FORUM_CONFIG = {
     },
     {
       id: 'avant-apres',
-      nom: 'Avant / après',
+      nom: "Avant / Aujourd'hui",
       format: 'Numérique',
-      jeu: 'jeux/avant-apres/index.html',
-      description: "10 lieux du bagne, hier et aujourd'hui : qu'est-ce qui a changé ?"
+      jeu: 'jeux/slide avant apres/index.html',
+      description: "Fais glisser la barre sur 8 photos d'époque et découvre les bâtiments du bagne tels qu'ils sont aujourd'hui."
     },
     {
       id: 'tri-objets',

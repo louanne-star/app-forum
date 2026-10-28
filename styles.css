@@ -438,11 +438,16 @@ body.avec-action .page { padding-bottom: 130px; }
 .choix-jeu { display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid var(--trait); border-radius: var(--r-lg); background: var(--papier); color: var(--texte); text-decoration: none; transition: border-color .15s ease; }
 .choix-jeu:hover { border-color: var(--encre); }
 .choix-jeu .nom { font: 500 22px/1.2 var(--serif); color: var(--encre); }
+/* Le jeu prend tout l'écran ; les boutons de l'équipe flottent en bas à droite, seulement en fin de partie. */
 .tablette { position: fixed; inset: 0; background: var(--encre); }
 .tablette-jeu { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
 .tablette-vide { position: absolute; inset: 16px; justify-content: center; align-items: center; text-align: center; }
-.tablette-outils { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; opacity: .9; }
+.tablette-outils { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); z-index: 3; display: flex; gap: 8px; }
+.tablette-outils .btn { padding: 9px 18px; font-size: 12px; margin-bottom: 0; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
 .tablette-outils .btn-ligne { background: var(--papier); }
+.tablette-outils[hidden] { display: none; }
+/* Accès équipe en cours de partie : appui long (2 s) dans ce coin invisible. */
+.tablette-coin { position: absolute; top: 0; left: 0; width: 44px; height: 44px; z-index: 2; touch-action: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -1,6 +1,6 @@
 # Forçats'Nou — appli du forum
 
-Le visiteur s'inscrit à l'entrée (prénom, nom, matricule de 4 chiffres, photo d'identité). L'équipe reçoit sa fiche en direct, dans l'ordre d'arrivée, et imprime sa carte matricule sur Canva. Pendant la visite, l'appli sert de guide : liste des activités, bouton « Scanner » pour valider chaque activité. Le visiteur fait les activités qu'il veut (au moins 3), termine son parcours, découvre son niveau au bagne et sort par la porte arrière récupérer sa carte.
+Le visiteur s'inscrit à l'entrée (prénom, nom, matricule de 4 chiffres, photo d'identité). L'équipe reçoit sa fiche en direct, dans l'ordre d'arrivée, et imprime sa carte matricule depuis l'espace équipe (modèle Canva déjà intégré). Pendant la visite, l'appli sert de guide : liste des activités, bouton « Scanner » pour valider chaque activité. Le visiteur fait les activités qu'il veut (au moins 3), termine son parcours, découvre son niveau au bagne et sort par la porte arrière récupérer sa carte.
 
 ## Les fichiers
 
@@ -32,17 +32,17 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 - **Espace équipe** (sur l'ordi d'impression) : `<adresse>/#/equipe`, code dans `config.js` (`codeEquipe`).
   - Chaque inscription arrive en direct avec un petit son (clique une fois dans la page pour l'activer). La plus ancienne est en premier.
   - Chaque fiche montre la **carte matricule déjà remplie** (photo, NOM, prénom, matricule) sur le modèle Canva.
-  - **Planche** (A4 épaisse, recto verso automatique, Epson ET-15000) : les cartes sont posées **en bande de 2 en haut de la feuille** (plus de bandes si on choisit plus de cartes, jusqu'à 10).
+  - **Planche** (A4 épaisse, recto verso automatique, Epson ET-15000) : les cartes sont posées **par bandes de 2 en haut de la feuille** (jusqu'à 5 bandes, soit 10 cartes).
     1. **Imprimer recto verso** : une seule impression de 2 pages (page 1 = recto, page 2 = verso). Dans la fenêtre d'impression : **recto verso, retournement bord long**, échelle **100 %**, marges « aucune », sans en-têtes ni pieds de page. Les cartes sont aussitôt marquées imprimées et la planche suivante se prépare.
     2. **Couper droit** sous les cartes (traits dans les marges) et séparer les cartes.
     3. Remettre **le reste de la feuille** dans l'imprimante, **bord coupé en haut**, pour la bande suivante.
   - Impression ratée ? Sur la fiche du visiteur (« Voir aussi les imprimées ») : **« Imprimée · remettre dans la file »**.
-  - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Le menu « Cartes sur la feuille » choisit combien en imprimer (2 par défaut).
+  - La file met en premier les visiteurs qui ont **terminé** leur parcours (on les attend à la porte), puis l'ordre d'arrivée. Par défaut la planche prend **toutes les cartes en attente** (jusqu'à 10 sur une feuille) ; le menu « Cartes sur la feuille » permet d'en imprimer moins (ex. 2 quand il y a peu de monde). La planche indique la hauteur de feuille nécessaire, pour savoir si un reste de feuille coupée suffit.
   - **Avant le forum : faire des tests sur papier normal** : vérifier que recto et verso se superposent (regarder la feuille à la lumière), puis que l'imprimante accepte encore la feuille raccourcie en recto verso après 1, 2, 3 bandes coupées.
   - Secours : **Télécharger la carte** (PNG) pour l'imprimer depuis un autre logiciel.
 - **Tablettes du stand** : `<adresse>/#/tablette` (même code équipe, la tablette s'en souvient). On choisit le jeu, il s'ouvre en plein écran (sans barre du navigateur sur Android et iPad ; sur iPhone, ou si la barre revient, ajouter la page `#/tablette` à l'écran d'accueil avec Partager → « Sur l'écran d'accueil » et l'ouvrir depuis l'icône). Les visiteurs ne voient jamais les jeux sur leur téléphone.
   - Fin de partie : l'équipe montre au visiteur le **QR imprimé** de l'activité (page `#/equipe/qr`, un par activité, papier comme numérique). Il le scanne avec « Scanner » de son appli → activité validée.
-  - **« Visiteur suivant »** (deux appuis) relance le jeu à zéro. L'Évasion repart aussi avec 0 fin découverte. Le bouton ☰ permet de changer de jeu.
+  - En fin de partie apparaissent **« Visiteur suivant »** (relance le jeu à zéro) et **« Changer de jeu »**. Le bouton « Quitter » de chaque jeu ramène aussi au menu.
   - Chaque jeu numérique vit dans `jeux/<id>/index.html` (chemin `jeu` dans config.js).
 - **Casque VR** : ouvrir https://vr-forum.netlify.app dans le navigateur du casque (le lien est aussi dans la liste de `#/tablette`, champ `lien` dans config.js). Validation comme les autres : le QR imprimé de l'activité.
 - **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`carte/verso.png`) est le même pour tous : il est imprimé automatiquement en page 2.
