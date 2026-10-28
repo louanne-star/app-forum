@@ -95,6 +95,7 @@ p { margin: 0; }
 /* Accueil : la gravure remonte sous le titre, dans son ciel vide. */
 .hero .ciel { position: relative; overflow: hidden; margin: -180px -20px -8px; }
 .hero .ciel .gravure { width: 100%; margin: 0; }
+.hero h1 em { color: var(--ocre); }
 
 /* Animations de l'accueil, lancées quand la page apparaît (.revele). */
 .revele .hero .mot { display: inline-block; animation: monte .8s cubic-bezier(.2, .7, .2, 1) both; }
@@ -106,7 +107,8 @@ p { margin: 0; }
 
 /* Tampon de la poste, au-dessus à droite des boutons photo. */
 .photo-zone { position: relative; }
-.cachet.tampon { position: absolute; top: -14px; right: 0; width: 78px; margin: 0; opacity: 0; pointer-events: none; }
+/* Posé au-dessus de la zone (à droite de « Ta photo ») : ne touche jamais les boutons, quelle que soit la largeur. */
+.cachet.tampon { position: absolute; bottom: calc(100% - 6px); right: 2px; width: 64px; margin: 0; opacity: 0; pointer-events: none; }
 .revele .cachet.tampon { animation: frappe .45s cubic-bezier(.2, 1.4, .4, 1) 1.6s forwards; }
 @media (prefers-reduced-motion: reduce) {
   .revele .ciel .gravure { -webkit-mask: none; mask: none; }
