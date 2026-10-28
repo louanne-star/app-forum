@@ -742,7 +742,7 @@
     if (!window.CARTE_IMAGES) await chargerScript('carte/images.js');
 
     let voirTout = false;
-    let nbVoulu = 2;             // nombre de cartes souhaité sur la prochaine planche (une bande de 2)
+    let nbVoulu = 0;             // cartes voulues sur la prochaine planche ; 0 = toutes celles en attente (jusqu'à 10)
     zone.innerHTML = `<div class="stack">
         <div class="stats" id="stats"></div>
         <section class="panneau planche" id="planche"></section>
@@ -759,18 +759,23 @@
     /* Ordre de la file : parcours terminé d'abord (la carte est attendue à la porte), puis arrivée. */
     const file = () => donnees.filter(v => !v.imprime).sort((a, b) =>
       (!!b.niveau - !!a.niveau) || (a.niveau ? (a.termine_at || '').localeCompare(b.termine_at || '') : 0) || a.created_at.localeCompare(b.created_at));
-    const prochaine = () => file().slice(0, nbVoulu);
+    const prochaine = () => file().slice(0, nbVoulu || PLANCHE.max);
 
     function dessinerPlanche() {
       const cartes = prochaine(), n = cartes.length, attente = file().length;
       if (!attente) { panneau.innerHTML = '<h2>Planche à imprimer</h2><p class="muted small">Aucune carte en attente.</p>'; return; }
+      // Hauteur de papier utilisée : on peut réutiliser une feuille déjà coupée si elle est assez haute.
+      const bandes = Math.ceil(n / PLANCHE.cols);
+      const hauteur = Math.ceil((PLANCHE.haut + bandes * (PLANCHE.h + PLANCHE.gout)) / 10);
+      const enTrop = attente - n;
       panneau.innerHTML = `
         <div class="row" style="justify-content:space-between">
           <h2>Planche à imprimer · ${pluriel(n, 'carte')}</h2>
           <label class="small muted">Cartes sur la feuille
-            <select data-pl="nb">${Array.from({ length: Math.min(attente, PLANCHE.max) }, (_, i) => `<option ${i + 1 === n ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>
+            <select data-pl="nb"><option value="0" ${nbVoulu ? '' : 'selected'}>Toutes (${Math.min(attente, PLANCHE.max)})</option>${Array.from({ length: Math.min(attente, PLANCHE.max) }, (_, i) => `<option value="${i + 1}" ${i + 1 === nbVoulu ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>
         </div>
         <p class="small">${cartes.map(v => `<b>#${esc(v.matricule)}</b> ${esc(nomComplet(v))}`).join(' · ')}</p>
+        <p class="small muted">${pluriel(bandes, 'bande')} de cartes : il faut une feuille d'au moins ${hauteur} cm de haut.${enTrop ? ` Encore ${pluriel(enTrop, 'carte')} en attente pour la planche suivante.` : ''}</p>
         <div class="planche-action">
           <button class="btn btn-mer" data-pl="imprimer">Imprimer recto verso</button>
         </div>`;
@@ -958,27 +963,37 @@
         ${installe
           ? `<iframe class="tablette-jeu" src="${esc(a.jeu)}" title="${esc(a.nom)}" allow="autoplay; fullscreen"></iframe>`
           : `<div class="tablette-vide dossier"><h1>${esc(a.nom)}</h1><p class="muted">Jeu pas encore installé : mets ses fichiers dans <span class="registre">${esc(a.jeu)}</span>.</p></div>`}
-        <div class="tablette-outils">
+        <div class="tablette-coin" aria-hidden="true"></div>
+        <div class="tablette-outils" id="outils" ${installe ? 'hidden' : ''}>
           <a class="btn btn-ligne" href="#/tablette/menu" >Changer de jeu</a>
           <button class="btn btn-mer" id="suivant">Visiteur suivant</button>
         </div>
       </div>`;
-    /* Relance le jeu à zéro. Deux appuis, pour qu'un visiteur ne coupe pas sa partie par erreur. */
-    const bouton = document.getElementById('suivant');
-    let delai;
-    app.querySelector('.tablette-outils').addEventListener('click', pleinEcran);
-    bouton.onclick = () => {
-      clearTimeout(delai);
-      if (!bouton.dataset.confirmer) {
-        bouton.dataset.confirmer = '1'; bouton.textContent = 'Confirmer ?';
-        delai = setTimeout(() => { delete bouton.dataset.confirmer; bouton.textContent = 'Visiteur suivant'; }, 3000);
-        return;
-      }
-      delete bouton.dataset.confirmer; bouton.textContent = 'Visiteur suivant';
+    /* Les boutons de l'équipe restent cachés pendant la partie (un visiteur ne peut pas
+       appuyer dessus par erreur). Ils apparaissent quand le jeu envoie parent.postMessage('fini', '*'),
+       disparaissent quand il envoie parent.postMessage('debut', '*') (nouvelle partie), ou basculent quand l'équipe garde le doigt 2 secondes dans le coin en haut à gauche. */
+    const outils = document.getElementById('outils');
+    const montrer = () => { outils.hidden = false; };
+    outils.addEventListener('click', pleinEcran);
+    document.getElementById('suivant').onclick = () => {
       const f = app.querySelector('iframe');
-      if (f) f.src = a.jeu;
+      if (!f) return;
+      f.src = a.jeu;   // relance le jeu à zéro
+      outils.hidden = true;
     };
-    nettoyage = () => clearTimeout(delai);
+    const ecoute = e => {
+      const f = app.querySelector('iframe');
+      if (!f || e.source !== f.contentWindow) return;
+      if (e.data === 'fini') montrer();
+      if (e.data === 'debut') outils.hidden = true;   // le visiteur relance une partie
+      if (e.data === 'quitter') aller('tablette');    // bouton « Quitter » du jeu (jeux/quitter.js)
+    };
+    window.addEventListener('message', ecoute);
+    const coin = app.querySelector('.tablette-coin');
+    let appui;
+    coin.addEventListener('pointerdown', () => { appui = setTimeout(() => { outils.hidden = !outils.hidden; }, 2000); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => coin.addEventListener(t, () => clearTimeout(appui)));
+    nettoyage = () => { clearTimeout(appui); window.removeEventListener('message', ecoute); };
   }
 
   /* ================= Routeur ================= */

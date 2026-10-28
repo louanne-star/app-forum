@@ -9,7 +9,7 @@
    - si les 5 étapes sont passées, le profil qui a le plus de
      points donne la fin ; en cas d'égalité, celui du choix le
      plus récent parmi les ex æquo
-   - les fins découvertes valent pour une visite : rien n'est gardé sur l'appareil
+   - pas de collection de fins : chaque visiteur ne fait qu'une ou deux parties
    ========================================================== */
 (() => {
   "use strict";
@@ -19,9 +19,6 @@
   /* En dessous de cette échelle, le texte devient trop petit :
      on passe en mise en page « compacte » (éléments empilés, défilement) */
   const SEUIL_COMPACT = 0.68;
-  const CLES_FINS = ["M", "R", "A", "repris"];
-  const ICONES_FINS = { M: "⚓", R: "🦊", A: "🔥", repris: "⛓️" };
-  const NOMS_FINS = { M: "Marin", R: "Rusé", A: "Audacieux", repris: "Repris" };
 
   const $ = (id) => document.getElementById(id);
   const racine = document.documentElement;
@@ -44,39 +41,6 @@
     verrou: false,      // bloque les doubles appuis pendant les animations
     suite: null         // action du bouton « Continuer »
   };
-
-  // ---------- Fins découvertes (le temps d'une visite : tablette partagée) ----------
-  /* Rien n'est gardé sur l'appareil : la collection repart à zéro
-     à chaque rechargement (« Visiteur suivant » sur la tablette du stand). */
-  const CLE_COLLECTION = "evasion-fins";
-  const collection = {};
-  try { localStorage.removeItem(CLE_COLLECTION); } catch (e) { /* ancienne collection : on l'efface */ }
-
-  const finsTrouvees = (id) => (Array.isArray(collection[id]) ? collection[id] : []);
-  /* Ajoute une fin ; renvoie true si elle est nouvelle */
-  function noterFin(id, cle) {
-    const liste = finsTrouvees(id);
-    if (liste.includes(cle)) return false;
-    collection[id] = liste.concat(cle);
-    return true;
-  }
-
-  /* Rangée de 4 médaillons : fins trouvées en couleur, les autres en « ? » */
-  function medaillons(id) {
-    const trouvees = finsTrouvees(id);
-    const rangee = document.createElement("span");
-    rangee.className = "medaillons";
-    rangee.setAttribute("aria-hidden", "true");
-    CLES_FINS.forEach((cle) => {
-      const m = document.createElement("span");
-      const ok = trouvees.includes(cle);
-      m.className = "medaillon" + (ok ? " trouve" : "") + (cle === "repris" ? " repris" : "");
-      m.textContent = ok ? ICONES_FINS[cle] : "?";
-      m.title = ok ? NOMS_FINS[cle] : "Fin à découvrir";
-      rangee.appendChild(m);
-    });
-    return rangee;
-  }
 
   // ---------- Mise à l'échelle ----------
   /* La scène (1536 × 1024) est réduite ou agrandie pour tenir dans
@@ -302,7 +266,8 @@
     if (focusAvantPopup && document.contains(focusAvantPopup)) focusAvantPopup.focus({ preventScroll: true });
     focusAvantPopup = null;
   }
-  const popupOuverte = () => (!popupQuitter.hidden ? popupQuitter : !popupConseq.hidden ? popupConseq : null);
+  const popupRegles = $("popup-regles");
+  const popupOuverte = () => (!popupRegles.hidden ? popupRegles : !popupQuitter.hidden ? popupQuitter : !popupConseq.hidden ? popupConseq : null);
 
   // ---------- Accueil ----------
   function afficherAccueil() {
@@ -313,19 +278,10 @@
       const b = document.createElement("button");
       b.type = "button";
       b.className = "choix-histoire";
-      const nb = finsTrouvees(h.id).length;
-      b.setAttribute("aria-label", `${h.titre}. ${nb} fin${nb > 1 ? "s" : ""} découverte${nb > 1 ? "s" : ""} sur 4.`);
       const titre = document.createElement("span");
       titre.className = "choix-histoire-titre";
       titre.textContent = h.titre;
-      const compte = document.createElement("span");
-      compte.className = "choix-histoire-compte";
-      compte.textContent = `${nb}/4 fins`;
-      compte.setAttribute("aria-hidden", "true");
-      const droite = document.createElement("span");
-      droite.className = "choix-histoire-fins";
-      droite.append(medaillons(h.id), compte);
-      b.append(titre, droite);
+      b.append(titre);
       b.addEventListener("click", () => lancerHistoire(h));
       li.appendChild(b);
       liste.appendChild(li);
@@ -338,6 +294,7 @@
 
   // ---------- Déroulé ----------
   function reinitialiser(h) {
+    parent.postMessage('debut', '*'); // tablette du stand : recache les boutons de l'équipe
     etat.histoire = h;
     etat.etape = 0;
     etat.atouts = new Set();
@@ -533,12 +490,10 @@
     const f = FINS[cle];
     const h = etat.histoire;
     const repris = cle === "repris";
-    const nouvelle = noterFin(h.id, cle);
 
     changerDecor(`assets/fins/${f.image}.webp`);
     ecrans.fin.classList.toggle("repris", repris);
     $("fin-surtitre").textContent = h.titre;
-    $("fin-nouvelle").hidden = !nouvelle;
     $("fin-titre").textContent = f.titre;
     ecrire($("fin-texte"), f.texte);
     $("fin-vrai").innerHTML = typo(f.vrai);   // contient seulement de l'italique
@@ -558,16 +513,10 @@
       chemin.appendChild(li);
     });
 
-    // fins découvertes dans cette histoire
-    const coll = $("fin-collection");
-    coll.innerHTML = "";
-    const nb = finsTrouvees(h.id).length;
-    coll.append(`Fins : ${nb}/4 `, medaillons(h.id));
-
     montrer("fin");
-    SON.jouer(repris ? "echec" : "victoire");
-    if (nouvelle) setTimeout(() => SON.jouer("decouverte"), 700);
-    annoncer(`${f.titre}. ${nouvelle ? "Nouvelle fin découverte ! " : ""}Fins découvertes : ${nb} sur 4.`);
+    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
+    SON.jouer(repris ? "perdu" : "victoire");
+    annoncer(f.titre);
     $("btn-reessayer").focus({ preventScroll: true });
   }
 
@@ -638,7 +587,7 @@
     const popup = popupOuverte();
     if (popup) {
       if (e.key === "Tab") pieger(e, popup);
-      else if (e.key === "Escape") popup === popupQuitter ? fermer(popupQuitter) : continuer();
+      else if (e.key === "Escape") popup === popupRegles || popup === popupQuitter ? fermer(popup) : continuer();
       return;
     }
     if (etat.ecran !== "etape" || etat.verrou) return;
@@ -656,4 +605,7 @@
 
   // ---------- Démarrage ----------
   afficherAccueil();
+  // Explication rapide à l'ouverture (une fois par visiteur : « Visiteur suivant » recharge le jeu)
+  $("btn-regles-ok").addEventListener("click", () => { SON.jouer("carte"); fermer(popupRegles); });
+  ouvrir(popupRegles);
 })();

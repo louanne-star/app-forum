@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Avant / Aujourd'hui</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Même charte que « Les Mots du Bagne » : nuit, pétrole, ivoire, parchemin, miel, terre ;
+   titres en Cormorant Garamond, texte en Lora. */
+:root{
+  --nuit:#192D3D; --petrole:#29485B; --ivoire:#F5EBDD; --parchemin:#DCC9A6;
+  --miel:#A96F3F; --terre:#B95F43; --vert:#587C4A;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --texte:'Lora',Georgia,serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:radial-gradient(ellipse at 50% 40%,#1f3546,#0e1820 75%);color:var(--ivoire);font-family:var(--texte);display:flex;flex-direction:column;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--parchemin);outline-offset:3px}
+
+.topbar{flex-shrink:0;background:var(--nuit);border-bottom:2px solid var(--miel);padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.topbar-in{max-width:1400px;margin:0 auto;height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo-title{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3vw,32px);line-height:1;letter-spacing:.02em}
+.logo-sub{font-family:var(--serif);font-weight:600;font-size:13px;letter-spacing:.24em;color:var(--parchemin);margin-top:4px;white-space:nowrap}
+.compteur{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.06em;font-variant-numeric:tabular-nums;border:2px solid var(--miel);border-radius:999px;padding:4px 16px;white-space:nowrap}
+.btn-aide{width:44px;height:44px;border-radius:50%;border:2px solid var(--miel);background:transparent;color:var(--ivoire);font-family:var(--serif);font-weight:700;font-size:22px;cursor:pointer}
+.top-right{display:flex;align-items:center;gap:12px}
+@media (max-width:560px){.logo-sub{display:none}}
+
+.app{flex:1;min-height:0;width:100%;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding:16px max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+
+/* ---------- Comparateur ---------- */
+.cadre{position:relative;flex:1;min-height:0;border-radius:14px;overflow:hidden;background:#0e1820;border:3px solid var(--miel);box-shadow:0 24px 48px -20px rgba(0,0,0,.8);touch-action:none;cursor:ew-resize}
+.cadre img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.apres{position:absolute;inset:0;clip-path:inset(0 0 0 var(--pos,100%))}
+.etiquette{position:absolute;top:14px;z-index:3;padding:4px 16px;border-radius:999px;font-family:var(--serif);font-weight:700;font-size:18px;letter-spacing:.14em;text-transform:uppercase;pointer-events:none;transition:opacity .25s;border:2px solid var(--miel)}
+.etiquette.avant{left:14px;background:var(--ivoire);color:var(--nuit)}
+.etiquette.auj{right:14px;background:var(--terre);border-color:#d98266;color:#fff}
+.ligne{position:absolute;top:0;bottom:0;left:var(--pos,100%);width:4px;margin-left:-2px;background:var(--ivoire);box-shadow:0 0 12px rgba(0,0,0,.6);z-index:2;pointer-events:none}
+.poignee{position:absolute;top:50%;left:clamp(34px,var(--pos,100%),calc(100% - 34px));z-index:4;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;
+  background:var(--nuit);color:var(--ivoire);border:3px solid var(--miel);display:grid;place-items:center;font-family:var(--serif);font-size:30px;font-weight:700;box-shadow:0 0 0 4px rgba(245,235,221,.35),0 8px 20px rgba(0,0,0,.5);cursor:ew-resize}
+.poignee.invite{animation:invite 1.6s ease-in-out infinite}
+@keyframes invite{0%,100%{transform:translateX(0)}50%{transform:translateX(-18px)}}
+.astuce{position:absolute;right:96px;top:50%;transform:translateY(-50%);z-index:3;background:var(--ivoire);color:#2a1f17;border:2px solid var(--miel);font-style:italic;padding:8px 16px;border-radius:10px;pointer-events:none;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+
+/* ---------- Bas : lieu + navigation ---------- */
+.bas{flex-shrink:0;display:flex;align-items:center;gap:14px}
+.lieu{flex:1;min-width:0;background:var(--ivoire);color:#2a1f17;border:2px solid var(--miel);border-radius:14px;padding:10px 22px}
+.lieu .eyebrow{font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--miel)}
+.lieu h1{margin:0;font-family:var(--serif);font-size:clamp(24px,3.2vw,34px);font-weight:700;line-height:1.1;color:var(--nuit)}
+.btn{height:56px;padding:0 28px;border-radius:999px;cursor:pointer;font-family:var(--texte);font-weight:600;font-size:18px;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:filter .2s,transform .15s;
+  color:var(--ivoire);background:var(--nuit);border:2px solid var(--miel)}
+.btn:hover{filter:brightness(1.2);transform:translateY(-2px)}
+.btn-primary{background:var(--terre);border-color:#d98266}
+.btn[disabled]{opacity:.35;cursor:default;filter:grayscale(1);transform:none}
+.btn-nav{width:56px;padding:0;font-size:22px}
+
+/* ---------- Pop-up d'explication et fin (panneau nuit + cartes ivoire, comme les Mots du Bagne) ---------- */
+.voile{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(10,18,26,.6);backdrop-filter:blur(4px)}
+.panel{width:100%;max-width:680px;max-height:100%;overflow:auto;background:var(--nuit);border:3px solid var(--miel);border-radius:22px;padding:clamp(22px,3.5vw,36px);box-shadow:0 30px 60px -20px rgba(0,0,0,.7);text-align:center;color:var(--ivoire)}
+.panel .eyebrow{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--parchemin)}
+.panel h2{margin:4px 0 10px;font-family:var(--serif);font-weight:700;font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:.02em}
+.panel p{margin:0 0 14px;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.4;opacity:.95}
+.panel p b{font-style:normal;color:var(--parchemin)}
+.panel .btn-primary{margin-top:14px;font-size:20px;padding:0 36px}
+.etapes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 6px;text-align:left}
+.etapes div{background:var(--ivoire);color:#2a1f17;border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.4}
+.etapes b{display:block;font-family:var(--serif);font-size:28px;line-height:1;color:var(--terre)}
+@media (max-width:560px){.etapes{grid-template-columns:1fr}}
+
+/* Petite démo animée dans le pop-up : sépia (avant) / couleurs (aujourd'hui) */
+.demo{position:relative;height:120px;border-radius:12px;overflow:hidden;margin:4px auto 0;max-width:380px;border:2px solid var(--miel);background:linear-gradient(#cdb48c 55%,#8a6e4b 55%)}
+.demo .d-auj{position:absolute;inset:0;background:linear-gradient(#9FCBE6 55%,var(--vert) 55%);animation:demo 3.2s ease-in-out infinite}
+.demo .d-ligne{position:absolute;top:0;bottom:0;width:4px;background:var(--ivoire);animation:demo-ligne 3.2s ease-in-out infinite}
+.demo span{position:absolute;bottom:6px;font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+@keyframes demo{0%,15%{clip-path:inset(0 0 0 100%)}55%,75%{clip-path:inset(0 0 0 20%)}100%{clip-path:inset(0 0 0 100%)}}
+@keyframes demo-ligne{0%,15%{left:calc(100% - 4px)}55%,75%{left:20%}100%{left:calc(100% - 4px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div>
+      <div class="logo-title">Avant / Aujourd'hui</div>
+      <div class="logo-sub">LES LIEUX DU BAGNE</div>
+    </div>
+    <div class="top-right">
+      <span class="compteur" id="compteur">1 / 8</span>
+      <button class="btn-aide" id="btn-aide" type="button" aria-label="Revoir l'explication">?</button>
+    </div>
+  </div>
+</header>
+
+<main class="app">
+  <div class="cadre" id="cadre">
+    <img id="img-avant" alt="">
+    <div class="apres"><img id="img-apres" alt=""></div>
+    <span class="etiquette avant" id="eti-avant">Avant</span>
+    <span class="etiquette auj" id="eti-auj">Aujourd'hui</span>
+    <div class="ligne" aria-hidden="true"></div>
+    <div class="poignee invite" id="poignee" role="slider" tabindex="0" aria-label="Glisse pour voir le lieu aujourd'hui" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">‹›</div>
+    <div class="astuce" id="astuce">← Glisse la barre</div>
+  </div>
+
+  <div class="bas">
+    <button class="btn btn-ghost btn-nav" id="btn-prec" type="button" aria-label="Lieu précédent">←</button>
+    <div class="lieu">
+      <div class="eyebrow" id="lieu-num">Lieu 1</div>
+      <h1 id="lieu-nom"></h1>
+    </div>
+    <button class="btn btn-primary" id="btn-suiv" type="button">Lieu suivant →</button>
+  </div>
+</main>
+
+<!-- Pop-up d'explication (au début, et via le bouton « ? ») -->
+<div class="voile" id="popup-intro">
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="intro-titre">
+    <div class="eyebrow">Site historique de l'île Nou</div>
+    <h2 id="intro-titre">Voyage dans le temps</h2>
+    <p>Glisse la barre <b>vers la gauche</b> pour voir le bagne <b>aujourd'hui</b>.</p>
+    <div class="demo" aria-hidden="true"><span style="left:10px">Avant</span><div class="d-auj"><span style="right:10px">Aujourd'hui</span></div><div class="d-ligne"></div></div>
+    <div class="etapes">
+      <div><b>1</b>Observe la photo d'époque.</div>
+      <div><b>2</b>Glisse la barre vers la gauche.</div>
+      <div><b>3</b>Repère ce qui a changé… ou pas !</div>
+    </div>
+    <button class="btn btn-primary" id="btn-commencer" type="button">C'est parti</button>
+  </section>
+</div>
+
+<!-- Fin du parcours -->
+<div class="voile" id="popup-fin" hidden>
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="fin-titre">
+    <div class="eyebrow">Fin du voyage</div>
+    <h2 id="fin-titre">Bravo !</h2>
+    <p id="fin-texte"></p>
+    <button class="btn btn-primary" id="btn-revoir" type="button">Revoir les lieux</button>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* Les paires de photos : même bâtiment, à l'époque du bagne et aujourd'hui. */
+  const LIEUX = [
+    { nom: "La boulangerie",                 avant: "img avant/boulangerie3.jpg",       apres: "img apres/boulangerie1.jpg" },
+    { nom: "Le boulevard du Crime",          avant: "img avant/boulevard du crime.jpg", apres: "img apres/boulevard du crime.jpg" },
+    { nom: "Les logements des surveillants", avant: "img avant/iut3.jpg",               apres: "img apres/iut.jpg" },
+    { nom: "Le théâtre",                     avant: "img avant/theatre1.jpg",           apres: "img apres/theatre1.jpg" },
+    { nom: "La chapelle",                    avant: "img avant/chapelle.jpg",           apres: "img apres/chapelle.jpg" },
+    { nom: "La boulangerie, côté allée",     avant: "img avant/boulangerie2.jpg",       apres: "img apres/boulangerie2.jpg" },
+    { nom: "Les logements des surveillants, la galerie", avant: "img avant/iut2.jpg",   apres: "img apres/iut2.jpg" },
+    { nom: "Le théâtre, la terrasse",        avant: "img avant/theatre3.jpg",           apres: "img apres/theatre2.jpg" }
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const cadre = $("cadre"), poignee = $("poignee");
+  const url = (chemin) => encodeURI(chemin);
+  let i = 0, pos = 100, touche = false;
+
+  /* pos = position de la barre en % depuis la gauche : 100 = tout « avant », 0 = tout « aujourd'hui » */
+  function placer(p) {
+    pos = Math.max(0, Math.min(100, p));
+    cadre.style.setProperty("--pos", pos + "%");
+    poignee.setAttribute("aria-valuenow", Math.round(100 - pos));
+    $("eti-auj").style.opacity = pos < 92 ? 1 : 0;
+    $("eti-avant").style.opacity = pos > 8 ? 1 : 0;
+  }
+
+  function premierGeste() {
+    if (touche) return;
+    touche = true;
+    poignee.classList.remove("invite");
+    $("astuce").hidden = true;
+  }
+
+  function afficher(n) {
+    i = n;
+    const l = LIEUX[i];
+    $("img-avant").src = url(l.avant);
+    $("img-apres").src = url(l.apres);
+    $("img-avant").alt = l.nom + ", à l'époque du bagne";
+    $("img-apres").alt = l.nom + ", aujourd'hui";
+    $("lieu-num").textContent = "Lieu " + (i + 1);
+    $("lieu-nom").textContent = l.nom;
+    $("compteur").textContent = (i + 1) + " / " + LIEUX.length;
+    $("btn-prec").disabled = i === 0;
+    $("btn-suiv").textContent = i === LIEUX.length - 1 ? "Terminer ✓" : "Lieu suivant →";
+    touche = false;
+    poignee.classList.add("invite");
+    $("astuce").hidden = false;
+    placer(100);
+    // précharge le lieu suivant
+    const s = LIEUX[i + 1];
+    if (s) [s.avant, s.apres].forEach((c) => { new Image().src = url(c); });
+  }
+
+  // ---------- Glisser (doigt, souris, stylet) ----------
+  let glisse = false;
+  const depuisEvenement = (e) => {
+    const r = cadre.getBoundingClientRect();
+    placer((e.clientX - r.left) / r.width * 100);
+  };
+  cadre.addEventListener("pointerdown", (e) => {
+    glisse = true;
+    cadre.setPointerCapture(e.pointerId);
+    premierGeste();
+    depuisEvenement(e);
+  });
+  cadre.addEventListener("pointermove", (e) => { if (glisse) depuisEvenement(e); });
+  const lacher = () => { glisse = false; };
+  cadre.addEventListener("pointerup", lacher);
+  cadre.addEventListener("pointercancel", lacher);
+
+  // Clavier (tests sur ordinateur) : flèches pour la barre
+  poignee.addEventListener("keydown", (e) => {
+    const pas = { ArrowLeft: -5, ArrowRight: 5, Home: -100, End: 100 }[e.key];
+    if (pas === undefined) return;
+    e.preventDefault();
+    premierGeste();
+    placer(pos + pas);
+  });
+
+  // ---------- Navigation ----------
+  $("btn-prec").addEventListener("click", () => { if (i > 0) afficher(i - 1); });
+  $("btn-suiv").addEventListener("click", () => {
+    if (i < LIEUX.length - 1) return afficher(i + 1);
+    $("fin-texte").textContent = "Tu as remonté le temps sur les " + LIEUX.length + " lieux du bagne de l'île Nou. Demande le QR code de l'activité à l'équipe et scanne-le avec ton appli pour la valider !";
+    $("popup-fin").hidden = false;
+    SONS.jouer("gagne");
+    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
+    $("btn-revoir").focus();
+  });
+  $("btn-revoir").addEventListener("click", () => { parent.postMessage('debut', '*'); $("popup-fin").hidden = true; afficher(0); });
+
+  // ---------- Pop-up d'explication ----------
+  $("btn-commencer").addEventListener("click", () => { $("popup-intro").hidden = true; poignee.focus({ preventScroll: true }); });
+  $("btn-aide").addEventListener("click", () => { $("popup-intro").hidden = false; $("btn-commencer").focus(); });
+
+  afficher(0);
+  $("btn-commencer").focus();
+})();
+</script>
+<script src="../sons.js"></script>
+<script src="../quitter.js" data-dans=".top-right"></script>
+</body>
+</html>

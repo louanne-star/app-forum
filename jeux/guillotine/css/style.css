@@ -257,7 +257,7 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 3px; border
 
 /* Clavier : 2 rangées de 13 tuiles */
 .clavier {
-  --tuile: min(calc(var(--h) * 6.9), calc(var(--w) * 5.5));
+  --tuile: min(calc(var(--h) * 6.9), calc(var(--w) * 5.1)); /* laisse la place aux boutons ronds à droite */
   display: grid;
   grid-template-columns: repeat(13, var(--tuile));
   gap: calc(var(--tuile) * .14) calc(var(--tuile) * .16);
