@@ -65,6 +65,7 @@ window.FORUM_CONFIG = {
      nom         : nom affiché
      format      : 'Papier', 'Numérique' ou 'Réalité virtuelle' (pour l'équipe, pas affiché aux visiteurs)
      jeu         : (numérique) page du jeu, ouverte sur les tablettes du stand (#/tablette).
+     lien        : (réalité virtuelle) site externe, proposé lui aussi dans #/tablette.
      description : l'explication donnée au visiteur dans la liste des activités
      Chaque activité a son QR code (#/equipe/qr) : le visiteur le scanne
      quand il a fini l'activité, pour la valider.
@@ -139,11 +140,12 @@ window.FORUM_CONFIG = {
       description: "Carabousse, chiourme, doublage… retrouve le vrai sens de 10 mots du bagne."
     },
     {
-      /* Sur le casque, pas sur les tablettes : ouvrir https://vr-forum.netlify.app
-         dans le navigateur du casque. */
+      /* Sur le casque : ouvrir #/tablette dans le navigateur du casque et choisir
+         cette activité (ou aller directement sur le lien). */
       id: 'vr',
       nom: "L'île Nou en réalité virtuelle",
       format: 'Réalité virtuelle',
+      lien: 'https://vr-forum.netlify.app',
       description: "Enfilez le casque et plongez dans le bagne de l’île Nou : choisissez un lieu sur la carte d’époque, puis explorez une salle d’exposition virtuelle avec photos d’archives, récits et ambiance sonore."
     }
   ]

@@ -365,6 +365,9 @@ body.avec-action .page { padding-bottom: 130px; }
 .defile .cachet.anim, .revele .defile .activite .cachet, .revele .activite.defile .cachet { animation-delay: .3s; }
 .gravure.fin.defile { transform: none; transition: opacity .6s ease; }
 .gravure.fin.defile.vu { opacity: .75; }
+.merci { position: relative; z-index: 1; margin: 12px 0 8px; text-align: center; text-wrap: balance; font: italic 400 22px/1.3 var(--serif); color: var(--encre); }
+.merci span { display: block; margin-top: 6px; font: 400 14px/1.4 var(--sans); font-style: normal; color: var(--ocre-texte); letter-spacing: .04em; }
+.merci.defile { transition-delay: .4s; }
 .revele .gravure.fin.defile:not(.vu) { animation-play-state: paused; }
 .revele .vagues { animation: houle 9s linear infinite; }
 @keyframes houle { to { transform: translateX(-50%); } }

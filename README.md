@@ -44,7 +44,7 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
   - Fin de partie : l'équipe montre au visiteur le **QR imprimé** de l'activité (page `#/equipe/qr`, un par activité, papier comme numérique). Il le scanne avec « Scanner » de son appli → activité validée.
   - **« Visiteur suivant »** (deux appuis) relance le jeu à zéro. L'Évasion repart aussi avec 0 fin découverte. Le bouton ☰ permet de changer de jeu.
   - Chaque jeu numérique vit dans `jeux/<id>/index.html` (chemin `jeu` dans config.js).
-- **Casque VR** : ouvrir https://vr-forum.netlify.app dans le navigateur du casque. Validation comme les autres : le QR imprimé de l'activité.
+- **Casque VR** : ouvrir https://vr-forum.netlify.app dans le navigateur du casque (le lien est aussi dans la liste de `#/tablette`, champ `lien` dans config.js). Validation comme les autres : le QR imprimé de l'activité.
 - **Modèle de carte** : le fond est `carte/recto.png` (modèle Canva sans le texte ni la photo). Le verso (`carte/verso.png`) est le même pour tous : il est imprimé automatiquement en page 2.
   - Chaque fiche indique si le visiteur est encore en visite ou a terminé (et son niveau).
 - **Visiteur qui change de téléphone** : lien « J'ai déjà un dossier » (matricule + nom).

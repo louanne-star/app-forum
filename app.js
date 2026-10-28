@@ -687,8 +687,9 @@
         <div class="titre-ligne"><h2>Ton <em>itinéraire</em></h2><span class="registre muted small">${faites.length} / ${C.activites.length}</span></div>
         ${faites.length ? `<ul class="activites compact">${faites.map((a, i) => `<li class="activite ok" style="--i: ${i}"><h3>${esc(a.nom)}</h3>${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span></li>`).join('')}</ul>` : '<p class="muted">Aucune activité validée.</p>'}
       </section>
-      ${GRAVURE.replace('class="gravure"', 'class="gravure fin"')}`, { mat: v.matricule });
-    defilement('.page > .sortie, .page > .feuille, .titre-ligne, .activites .activite, .gravure.fin');
+      ${GRAVURE.replace('class="gravure"', 'class="gravure fin"')}
+      <p class="merci">Merci de ta visite au bagne de l'île&nbsp;Nou&nbsp;!<span>Bon vent, et à bientôt.</span></p>`, { mat: v.matricule });
+    defilement('.page > .sortie, .page > .feuille, .titre-ligne, .activites .activite, .gravure.fin, .merci');
   }
 
   /* ================= Espace équipe ================= */
@@ -904,7 +905,7 @@
   /* Les jeux numériques tournent sur les tablettes de l'équipe, jamais sur le téléphone
      du visiteur. Partie finie : l'équipe montre le QR imprimé de l'activité (#/equipe/qr),
      le visiteur le scanne avec le bouton « Scanner » de son appli pour la valider. */
-  const jeuxNumeriques = () => C.activites.filter(a => a.jeu);
+  const jeuxNumeriques = () => C.activites.filter(a => a.jeu || a.lien);
 
   function ecranTablette(id) {
     if (store.get(K_TABLETTE) !== '1') {
@@ -930,7 +931,7 @@
           <h1>Quel jeu sur cette tablette ?</h1>
           <p class="muted small">Touche un jeu : il s'ouvre en plein écran et revient au début pour chaque visiteur.</p>
           <div class="grille">
-            ${jeuxNumeriques().map(j => `<a class="choix-jeu" href="#/tablette/${esc(j.id)}"><span class="nom">${esc(j.nom)}</span><span class="muted small">${esc(j.description)}</span></a>`).join('')}
+            ${jeuxNumeriques().map(j => `<a class="choix-jeu" href="${j.jeu ? `#/tablette/${esc(j.id)}` : esc(j.lien)}"><span class="nom">${esc(j.nom)}</span><span class="muted small">${esc(j.description)}</span></a>`).join('')}
           </div>
         </div>`, { equipe: true });
       return;
