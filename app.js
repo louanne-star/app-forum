@@ -522,16 +522,10 @@
       <section class="libre">
         <h2>Ton carnet de <em>timbres</em></h2>
         <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Chacune te rapporte un timbre : plus ton carnet se remplit, plus ton grade monte au bagne.</p>
-        <div class="timbres carnet" role="img" aria-label="${n} timbres sur ${total}">
+        <div class="timbres carnet" style="--cols: ${Math.ceil(total / 2)}" role="img" aria-label="${n} timbres sur ${total}">
           ${Array.from({ length: total }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''} ${C.niveaux.some(nv => nv.min === i + 1) ? 'palier' : ''}"><span>${i + 1}</span></span>`).join('')}
         </div>
-        <p class="small">${(() => {
-          const actuel = [...C.niveaux].reverse().find(nv => n >= nv.min);
-          const suivant = C.niveaux.find(nv => n < nv.min);
-          if (!suivant) return `<b>${esc(actuel.nom)}</b> · le plus haut grade du bagne !`;
-          const reste = `encore ${pluriel(suivant.min - n, 'timbre')} pour devenir <b>${esc(suivant.nom)}</b>`;
-          return actuel ? `Tu es <b>${esc(actuel.nom)}</b> · ${reste}` : reste.charAt(0).toUpperCase() + reste.slice(1);
-        })()}</p>
+        ${n < min ? `<p class="small"><b>Il faut faire au moins ${pluriel(min, 'activité')} pour terminer ton parcours.</b></p>` : ''}
       </section>
 
       <section class="stack">

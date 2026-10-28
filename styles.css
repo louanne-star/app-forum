@@ -241,8 +241,12 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
   border: 1px solid var(--trait); font: italic 400 24px/1 var(--serif); color: var(--trait-fort);
 }
 /* Carnet : un timbre par activité ; les paliers de grade ont leur numéro en doré. */
-.timbres.carnet { gap: 8px; }
-.carnet .timbre { width: 44px; height: 54px; padding: 5px; }
+.timbres.carnet { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(0, 44px)); gap: 8px; }
+/* Fond teinté : sur le papier du panneau, un timbre papier ne montrerait pas ses dents. */
+.carnet .timbre {
+  --fond: #ebe2cc; width: auto; height: auto; aspect-ratio: 44 / 54; padding: 5px;
+  filter: drop-shadow(0 0 .5px var(--trait-fort)) drop-shadow(0 1px 1.5px rgba(28, 33, 64, .18));
+}
 .carnet .timbre > span { font-size: 18px; }
 .carnet .timbre.palier:not(.ok) > span { color: var(--ocre); border-color: rgba(179, 137, 63, .45); }
 .timbre.ok { --fond: var(--encre); }
