@@ -513,19 +513,24 @@
       </section>
 
       <section class="libre">
-        <h2>Tu es libre !</h2>
-        <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Pas besoin de tout faire : il en faut <b>au moins ${min}</b> pour terminer ton parcours. Plus tu en fais, plus ton niveau monte.</p>
-        <div class="timbres" role="img" aria-label="${n} activités validées sur ${min} minimum">
-          ${Array.from({ length: min }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''}"><span>${i + 1}</span></span>`).join('')}
+        <h2>Ton carnet de <em>timbres</em></h2>
+        <p class="muted small">Fais les activités qui te plaisent, dans l'ordre que tu veux. Chacune te rapporte un timbre : plus ton carnet se remplit, plus ton grade monte au bagne.</p>
+        <div class="timbres carnet" role="img" aria-label="${n} timbres sur ${total}">
+          ${Array.from({ length: total }, (_, i) => `<span class="timbre ${i < n ? 'ok' : ''} ${C.niveaux.some(nv => nv.min === i + 1) ? 'palier' : ''}"><span>${i + 1}</span></span>`).join('')}
         </div>
-        <p class="small ${peut ? '' : 'muted'}">${peut ? `<b>${pluriel(n, 'activité')} validée${n > 1 ? 's' : ''}</b> · tu peux terminer` : `Encore ${pluriel(min - n, 'activité')} avant de pouvoir terminer`}</p>
+        <p class="small">${(() => {
+          const actuel = [...C.niveaux].reverse().find(nv => n >= nv.min);
+          const suivant = C.niveaux.find(nv => n < nv.min);
+          if (!suivant) return `<b>${esc(actuel.nom)}</b> · le plus haut grade du bagne !`;
+          const reste = `encore ${pluriel(suivant.min - n, 'timbre')} pour devenir <b>${esc(suivant.nom)}</b>`;
+          return actuel ? `Tu es <b>${esc(actuel.nom)}</b> · ${reste}` : reste.charAt(0).toUpperCase() + reste.slice(1);
+        })()}</p>
       </section>
 
       <section class="stack">
-        <div class="titre-ligne"><h2>${pluriel(total, 'activité')}</h2><span class="registre muted small">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
+        <div class="titre-ligne"><h2><i class="point" aria-hidden="true">•</i>Activités</h2><span class="registre muted small">${n} / ${total} faite${n > 1 ? 's' : ''}</span></div>
         <ul class="activites">
           ${C.activites.map((a, i) => `<li class="activite ${faites.has(a.id) ? 'ok' : ''}">
-            <span class="num">N° ${String(i + 1).padStart(2, '0')}${a.format ? ` · ${esc(a.format)}` : ''}</span>
             <h3>${esc(a.nom)}</h3>
             <p class="desc">${esc(a.description)}</p>
             ${faites.has(a.id) ? `${cachet('Île Nou · validé · Île Nou · validé ·', 'Validé')}<span class="sr">Validé</span>` : '<span class="a-voir">À découvrir</span>'}
