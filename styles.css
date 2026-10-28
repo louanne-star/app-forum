@@ -93,15 +93,60 @@ p { margin: 0; }
 .gravure { display: block; width: calc(100% + 40px); max-width: none; height: auto; margin: -20px -20px -8px; }
 .gravure.fin { margin-top: 0; }
 /* Accueil : la gravure remonte sous le titre, dans son ciel vide. */
-.hero .gravure { margin-top: -180px; }
+.hero .ciel { position: relative; overflow: hidden; margin: -180px -20px -8px; }
+.hero .ciel .gravure { width: 100%; margin: 0; }
+
+/* Animations de l'accueil, lancées quand la page apparaît (.revele). */
+.revele .hero .mot { display: inline-block; animation: monte .8s cubic-bezier(.2, .7, .2, 1) both; }
+.revele .hero .mot:nth-child(2) { animation-delay: .12s; }
+.revele .hero .mot:nth-child(3) { animation-delay: .24s; }
+.revele .ciel .gravure { -webkit-mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; animation: imprime 1.8s cubic-bezier(.4, 0, .2, 1) .3s forwards; }
+@keyframes monte { from { opacity: 0; transform: translateY(.45em); clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 -20% 0); } }
+@keyframes imprime { to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+
+/* Tampon de la poste, au-dessus à droite des boutons photo. */
+.photo-zone { position: relative; }
+.cachet.tampon { position: absolute; top: -14px; right: 0; width: 78px; margin: 0; opacity: 0; pointer-events: none; }
+.revele .cachet.tampon { animation: frappe .45s cubic-bezier(.2, 1.4, .4, 1) 1.6s forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .revele .ciel .gravure { -webkit-mask: none; mask: none; }
+  .cachet.tampon { opacity: 1; }
+}
 .hero h1, .hero .label { position: relative; z-index: 1; }
 
 /* ---------- Popup d'accueil ---------- */
 .popup { width: min(100% - 32px, 420px); max-height: calc(100% - 32px); padding: 28px 22px 22px; border: 1px solid var(--trait-fort); border-radius: var(--r-lg); background: var(--papier); color: var(--texte); }
-.popup::backdrop { background: rgba(24, 36, 94, .45); }
+html:has(.popup[open]), html:has(.popup[open]) body { overflow: hidden; } /* la page derrière ne défile plus */
+.popup { overscroll-behavior: contain; }
+.popup::backdrop { background: var(--creme); } /* opaque : la page reste cachée tant que la popup est ouverte */
 .popup h2 { outline: none; padding-right: 40px; margin-bottom: 8px; color: var(--encre); }
-.popup-sous { margin: 22px 0 6px; color: var(--encre); }
-.popup-fermer { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--trait); border-radius: var(--r-pill); background: none; color: var(--encre); cursor: pointer; }
+/* Ouverture : la bulle gonfle, puis le titre, le sous-titre et enfin les étapes. */
+.popup[open] { animation: bulle .5s cubic-bezier(.34, 1.56, .64, 1) both; }
+.popup[open]::backdrop { animation: voile .4s ease both; }
+.popup[open] > :not(.popup-fermer) { animation: apparait .5s ease both; }
+.popup[open] > h2 { animation-delay: .35s; }
+.popup[open] > .chapo { animation-delay: .75s; }
+.popup[open] > .popup-sous { animation-delay: 1.2s; }
+.popup[open] .etapes li { animation: apparait .45s ease both; }
+.popup[open] .etapes li:nth-child(1) { animation-delay: 1.35s; }
+.popup[open] .etapes li:nth-child(2) { animation-delay: 1.5s; }
+.popup[open] .etapes li:nth-child(3) { animation-delay: 1.65s; }
+.popup[open] > .etapes { animation: none; }
+@keyframes bulle { from { opacity: 0; transform: scale(.4); border-radius: 50%; } 60% { opacity: 1; } to { transform: none; } }
+@keyframes voile { from { opacity: 0; } }
+@keyframes apparait { from { opacity: 0; transform: translateY(10px); } }
+/* Fermeture : la page, cachée derrière, apparaît élément par élément. */
+.revele .bandeau, .revele .page > :not(dialog) { animation: apparait .5s ease both; }
+.revele .page > :nth-child(2) { animation-delay: .12s; }
+.revele .page > :nth-child(3) { animation-delay: .24s; }
+.revele .page > :nth-child(4) { animation-delay: .36s; }
+.revele .page > :nth-child(n+5) { animation-delay: .48s; }
+@media (prefers-reduced-motion: reduce) {
+  .revele *,
+  .popup[open], .popup[open]::backdrop, .popup[open] *, .popup[open] .etapes li { animation: none !important; }
+}
+.popup-sous { margin: 22px 0 6px; font-size: 17px; color: var(--encre); }
+.popup-fermer { position: absolute; z-index: 1; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--trait); border-radius: var(--r-pill); background: none; color: var(--encre); cursor: pointer; }
 .popup-fermer svg { width: 20px; height: 20px; }
 .popup-fermer:focus-visible { outline: 2px solid var(--ocre); outline-offset: 2px; }
 
@@ -109,8 +154,8 @@ p { margin: 0; }
 .etapes { list-style: none; margin: 0; padding: 0; }
 .etapes li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding-block: 14px; border-top: 1px solid var(--trait); }
 .etapes li:last-child { border-bottom: 1px solid var(--trait); }
-.etapes .n { font: italic 400 30px/1 var(--serif); color: var(--ocre); }
-.etapes b { display: block; font: 500 19px/1.25 var(--serif); color: var(--encre); margin-bottom: 2px; }
+.etapes .n { font: italic 400 30px/1 var(--serif); color: var(--encre); }
+.etapes b { display: block; font: 600 19px/1.25 var(--serif); color: var(--ocre); margin-bottom: 2px; }
 .etapes span:not(.n) { color: var(--texte-2); font-size: 15px; }
 
 /* ---------- Feuilles ---------- */
@@ -232,14 +277,14 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
 .photo-zone { display: flex; gap: 16px; align-items: center; }
 .photo-cadre {
   --fond: var(--creme);
-  flex: none; width: 84px; aspect-ratio: 7 / 9; overflow: hidden;
+  flex: none; width: 120px; aspect-ratio: 7 / 9; overflow: hidden;
   display: grid; place-items: end center;
 }
 .photo-cadre img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo-cadre.charge { opacity: .5; }
 .photo-vide { width: 60%; aspect-ratio: 1; margin-bottom: -14%; border: 1.5px solid var(--trait-fort); border-radius: 50% 50% 0 0; position: relative; }
 .photo-vide::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 54%; aspect-ratio: 1; transform: translate(-50%, -6px); border: 1.5px solid var(--trait-fort); border-radius: 50%; }
-.photo-zone label.btn { position: relative; width: 100%; }
+.photo-zone label.btn { position: relative; align-self: flex-start; padding: 6px 14px; font-size: 11px; line-height: 16px; letter-spacing: .08em; }
 .fichier { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .consent { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; font-size: 14px; line-height: 1.5; color: var(--texte-2); cursor: pointer; }
 .consent input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--encre); }

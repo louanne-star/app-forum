@@ -334,8 +334,10 @@
     cadre(`
       <section class="stack hero">
         <p class="label">Pénitencier de l'île Nou</p>
-        <h1 class="display-xl">Ouvre ton <em>dossier</em></h1>
-        ${GRAVURE}
+        <h1 class="display-xl"><span class="mot">Ouvre</span> <span class="mot">ton</span> <em class="mot">dossier</em></h1>
+        <div class="ciel">
+          ${GRAVURE}
+        </div>
       </section>
 
       <dialog class="popup" id="bienvenue" aria-labelledby="t-bienvenue">
@@ -365,6 +367,7 @@
         <div class="champ">
           <span class="champ-titre">Ta photo</span>
           <div class="photo-zone">
+            ${cachet('Pénitencier · île Nou ·', '1864', '', 'tampon')}
             <div class="photo-cadre" id="apercu" aria-live="polite"><span class="photo-vide" aria-hidden="true"></span></div>
             <div class="stack-sm" style="flex:1;min-width:0">
               <label class="btn btn-mer btn-sm">Prendre une photo<input class="fichier" type="file" accept="image/*" capture="user" data-photo></label>
@@ -382,8 +385,12 @@
     // Popup d'accueil : affichée une fois par visite.
     const bienvenue = document.getElementById('bienvenue');
     bienvenue.querySelector('.popup-fermer').onclick = () => bienvenue.close();
-    bienvenue.addEventListener('close', () => store.set(K_BIENVENUE, '1', sessionStorage));
+    bienvenue.addEventListener('close', () => {
+      store.set(K_BIENVENUE, '1', sessionStorage);
+      app.classList.add('revele');  // la page, cachée derrière la popup, apparaît
+    });
     if (!store.get(K_BIENVENUE, sessionStorage)) bienvenue.showModal();
+    else app.classList.add('revele');
 
     const f = document.getElementById('f'), err = document.getElementById('err');
     const mat = document.getElementById('matricule'), apercu = document.getElementById('apercu');
