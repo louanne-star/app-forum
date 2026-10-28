@@ -30,7 +30,7 @@
     get(k, s = localStorage) { try { return s.getItem(k); } catch { return null; } },
     set(k, v, s = localStorage) { try { v == null ? s.removeItem(k) : s.setItem(k, v); } catch { /* stockage indisponible */ } },
   };
-  const K_MOI = 'forcats.moi', K_ATTENTE = 'forcats.attente', K_EQUIPE = 'forcats.equipe', K_TABLETTE = 'forcats.tablette';
+  const K_MOI = 'forcats.moi', K_ATTENTE = 'forcats.attente', K_EQUIPE = 'forcats.equipe', K_TABLETTE = 'forcats.tablette', K_BIENVENUE = 'forcats.bienvenue';
 
   let toastTimer;
   function toast(msg) {
@@ -335,48 +335,55 @@
       <section class="stack hero">
         <p class="label">Pénitencier de l'île Nou</p>
         <h1 class="display-xl">Ouvre ton <em>dossier</em></h1>
-        <div class="hero-image">
-          <p class="chapo">Bienvenue au bagne ! Inscris-toi pour recevoir ta carte matricule, puis découvre les activités du stand.</p>
-          ${GRAVURE}
-        </div>
+        ${GRAVURE}
       </section>
 
-      <section class="stack" aria-labelledby="t-guide">
-        <h2 id="t-guide">Comment ça marche</h2>
+      <dialog class="popup" id="bienvenue" aria-labelledby="t-bienvenue">
+        <button class="popup-fermer" type="button" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <h2 id="t-bienvenue" tabindex="-1" autofocus>Bienvenue au <em>bagne</em></h2>
+        <p class="chapo">Inscris-toi puis découvre les activités du stand.</p>
+        <h3 class="popup-sous">Comment ça marche</h3>
         <ol class="etapes">
-          <li><span class="n">1</span><div><b>Inscris-toi</b><span>Prénom, nom, photo et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
-          <li><span class="n">2</span><div><b>Fais les activités de ton choix</b><span>Tu es libre ! Au moins ${minimum()}, dans l'ordre que tu veux. Scanne le QR code de chaque activité avec le bouton « Scanner » de l'appli.</span></div></li>
-          <li><span class="n">3</span><div><b>Termine ton parcours</b><span>Découvre ton niveau, puis sors par la porte arrière récupérer ta carte matricule.</span></div></li>
+          <li><span class="n">1</span><div><b>Inscris-toi</b><span>Nom prénom et 4 chiffres au choix : ce sera ton matricule.</span></div></li>
+          <li><span class="n">2</span><div><b>Fais les activités de ton choix</b><span>Au moins ${minimum()} activités, dans l'ordre que tu veux. Scanne le QR code de chacune.</span></div></li>
+          <li><span class="n">3</span><div><b>Termine ton parcours</b><span>Sors par la porte arrière récupérer ta carte matricule.</span></div></li>
         </ol>
-      </section>
+      </dialog>
 
       ${attente ? `<p class="alerte">Inscris-toi d'abord : l'activité <b>${esc(attente.nom)}</b> sera validée juste après.</p>` : ''}
 
       <form class="feuille" id="f" novalidate>
-        <div class="feuille-tete"><span class="label">Fiche d'entrée</span><span class="registre muted">N° ……</span></div>
+        <div class="feuille-tete"><span class="label">Ton dossier</span><span class="registre muted">N° ……</span></div>
         <div class="champ"><label for="prenom">Prénom</label><input type="text" id="prenom" autocomplete="given-name" maxlength="60" required></div>
         <div class="champ"><label for="nom">Nom</label><input type="text" id="nom" autocomplete="family-name" maxlength="60" required></div>
-        <div class="champ"><label for="matricule">Ton matricule (4 chiffres)</label>
+        <div class="champ"><label for="matricule">Ton matricule</label>
           <input id="matricule" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" class="matricule-input" placeholder="····" required>
-          <span class="aide">Choisis 4 chiffres et retiens-les : ils seront imprimés sur ta carte.</span></div>
+          <span class="aide">Choisis 4 chiffres au choix</span></div>
 
         <div class="champ">
-          <span class="champ-titre">Ta photo (format identité)</span>
+          <span class="champ-titre">Ta photo</span>
           <div class="photo-zone">
             <div class="photo-cadre" id="apercu" aria-live="polite"><span class="photo-vide" aria-hidden="true"></span></div>
             <div class="stack-sm" style="flex:1;min-width:0">
               <label class="btn btn-mer btn-sm">Prendre une photo<input class="fichier" type="file" accept="image/*" capture="user" data-photo></label>
               <label class="btn btn-ligne btn-sm">Choisir dans ma galerie<input class="fichier" type="file" accept="image/*" data-photo></label>
-              <span class="aide">De face, visage bien centré, sur un fond clair.</span>
             </div>
           </div>
         </div>
 
         <label class="consent"><input type="checkbox" id="consent"><span>${esc(C.consentement)}</span></label>
         <p class="erreur" id="err" hidden></p>
-        <button class="btn btn-mer btn-bloc" type="submit">Entrer au bagne</button>
+        <button class="btn btn-mer btn-bloc" type="submit">Commencer</button>
       </form>
       <p class="pied"><a href="#/retrouver">J'ai déjà un dossier</a></p>`);
+
+    // Popup d'accueil : affichée une fois par visite.
+    const bienvenue = document.getElementById('bienvenue');
+    bienvenue.querySelector('.popup-fermer').onclick = () => bienvenue.close();
+    bienvenue.addEventListener('close', () => store.set(K_BIENVENUE, '1', sessionStorage));
+    if (!store.get(K_BIENVENUE, sessionStorage)) bienvenue.showModal();
 
     const f = document.getElementById('f'), err = document.getElementById('err');
     const mat = document.getElementById('matricule'), apercu = document.getElementById('apercu');
@@ -419,7 +426,7 @@
         erreur(e2 && e2.code === 'MATRICULE_PRIS'
           ? `Le matricule ${matricule} est déjà pris par un autre forçat. Choisis 4 autres chiffres.`
           : "L'inscription n'est pas passée. Vérifie ta connexion et réessaie.");
-        b.disabled = false; b.textContent = 'Entrer au bagne';
+        b.disabled = false; b.textContent = 'Commencer';
         if (!(e2 && e2.code)) console.error(e2);
       }
     });

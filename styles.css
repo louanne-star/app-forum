@@ -21,7 +21,7 @@
   --sans: 'Jost', 'Futura', 'Century Gothic', sans-serif;
 
   --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-pill: 999px;
-  color-scheme: light;
+  color-scheme: only light; /* interdit l'assombrissement forcé des navigateurs */
 }
 
 * { box-sizing: border-box; }
@@ -92,13 +92,18 @@ p { margin: 0; }
 /* ---------- Gravure ---------- */
 .gravure { display: block; width: calc(100% + 40px); max-width: none; height: auto; margin: -20px -20px -8px; }
 .gravure.fin { margin-top: 0; }
-/* Accueil : le texte d'accueil posé dans le ciel vide de la gravure, à gauche du bateau. */
-/* La gravure remonte sous le titre ; le texte garde sa place grâce au padding. */
-.hero-image { display: grid; margin: -76px -20px -8px; }
-.hero-image > * { grid-area: 1 / 1; }
-.hero-image .gravure { width: 100%; margin: 0; }
-.hero-image .chapo { position: relative; z-index: 1; align-self: start; max-width: 64%; padding: 80px 0 0 20px; }
+/* Accueil : la gravure remonte sous le titre, dans son ciel vide. */
+.hero .gravure { margin-top: -180px; }
 .hero h1, .hero .label { position: relative; z-index: 1; }
+
+/* ---------- Popup d'accueil ---------- */
+.popup { width: min(100% - 32px, 420px); max-height: calc(100% - 32px); padding: 28px 22px 22px; border: 1px solid var(--trait-fort); border-radius: var(--r-lg); background: var(--papier); color: var(--texte); }
+.popup::backdrop { background: rgba(24, 36, 94, .45); }
+.popup h2 { outline: none; padding-right: 40px; margin-bottom: 8px; color: var(--encre); }
+.popup-sous { margin: 22px 0 6px; color: var(--encre); }
+.popup-fermer { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--trait); border-radius: var(--r-pill); background: none; color: var(--encre); cursor: pointer; }
+.popup-fermer svg { width: 20px; height: 20px; }
+.popup-fermer:focus-visible { outline: 2px solid var(--ocre); outline-offset: 2px; }
 
 /* ---------- Étapes de l'accueil ---------- */
 .etapes { list-style: none; margin: 0; padding: 0; }
@@ -112,11 +117,15 @@ p { margin: 0; }
 .feuille {
   background: var(--papier);
   border: 1px solid var(--trait); border-radius: var(--r-lg);
-  padding: 24px 20px;
-  display: flex; flex-direction: column; gap: 20px;
+  padding: 16px 20px 18px;
+  display: flex; flex-direction: column; gap: 12px;
   min-width: 0;
 }
 .feuille-tete { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; border-bottom: 1px dashed var(--trait-fort); padding-bottom: 12px; }
+.feuille input[type=text], .feuille input[inputmode] { padding-block: 8px; }
+.feuille .champ { gap: 5px; }
+.feuille .matricule-input { font-size: 26px !important; }
+.feuille .btn-bloc { padding-block: 12px; }
 .panneau { display: flex; flex-direction: column; gap: 14px; }
 
 /* ---------- Formulaire ---------- */
@@ -223,7 +232,7 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
 .photo-zone { display: flex; gap: 16px; align-items: center; }
 .photo-cadre {
   --fond: var(--creme);
-  flex: none; width: 118px; aspect-ratio: 7 / 9; overflow: hidden;
+  flex: none; width: 84px; aspect-ratio: 7 / 9; overflow: hidden;
   display: grid; place-items: end center;
 }
 .photo-cadre img { width: 100%; height: 100%; object-fit: cover; display: block; }
