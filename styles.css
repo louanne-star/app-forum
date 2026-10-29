@@ -23,6 +23,12 @@
   --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-pill: 999px;
   color-scheme: only light; /* interdit l'assombrissement forcé des navigateurs */
 }
+/* Samsung Internet ignore « only light » mais n'assombrit pas un site qui a son propre
+   thème sombre : on en déclare un… qui garde exactement les couleurs claires. */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: only light; }
+  html, body { background-color: var(--creme); color: var(--texte); }
+}
 
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
