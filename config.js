@@ -92,11 +92,11 @@ window.FORUM_CONFIG = {
       description: "Déchiffre les rébus des cartes et retrouve chaque lieu sur la carte."
     },
     {
-      id: 'evasion',
-      nom: "L'Évasion",
+      id: 'memory-sonore',
+      nom: 'Le memory sonore',
       format: 'Numérique',
-      jeu: 'jeux/evasion/index.html',
-      description: "Choisis ton histoire de forçat, puis fais 5 choix pour préparer et réussir ta fuite. Un faux pas et tu es repris !"
+      jeu: 'jeux/memory-sonore/index.html',
+      description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
     },
     {
       id: 'zoom',
@@ -106,11 +106,11 @@ window.FORUM_CONFIG = {
       description: "Un détail en gros plan : devine ce que c'est. Plus tu trouves vite, plus tu marques de points."
     },
     {
-      id: 'memory-sonore',
-      nom: 'Le memory sonore',
+      id: 'evasion',
+      nom: "L'Évasion",
       format: 'Numérique',
-      jeu: 'jeux/memory-sonore/index.html',
-      description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
+      jeu: 'jeux/evasion/index.html',
+      description: "Choisis ton histoire de forçat, puis fais 5 choix pour préparer et réussir ta fuite. Un faux pas et tu es repris !"
     },
     {
       id: 'tri-objets',
