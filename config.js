@@ -72,6 +72,20 @@ window.FORUM_CONFIG = {
      ⚠ Ne pas changer l'id d'une activité après avoir imprimé ses QR codes. */
   activites: [
     {
+      id: 'avant-apres',
+      nom: "Avant / Aujourd'hui",
+      format: 'Numérique',
+      jeu: 'jeux/slide avant apres/index.html',
+      description: "Fais glisser la barre sur 8 photos d'époque et découvre les bâtiments du bagne tels qu'ils sont aujourd'hui."
+    },
+    {
+      id: 'argot',
+      nom: 'Les Mots du Bagne',
+      format: 'Numérique',
+      jeu: 'jeux/argot/index.html',
+      description: "Carabousse, chiourme, doublage… retrouve le vrai sens de 10 mots du bagne."
+    },
+    {
       id: 'decouverte',
       nom: 'La découverte inversée',
       format: 'Papier',
@@ -85,18 +99,18 @@ window.FORUM_CONFIG = {
       description: "Choisis ton histoire de forçat, puis fais 5 choix pour préparer et réussir ta fuite. Un faux pas et tu es repris !"
     },
     {
-      id: 'guillotine',
-      nom: 'Le Pendu du Bagne',
+      id: 'zoom',
+      nom: 'Plein cadre',
       format: 'Numérique',
-      jeu: 'jeux/guillotine/index.html',
-      description: "Trouve 10 mots du bagne, lettre par lettre, avant que la lame de la guillotine ne tombe."
+      jeu: 'jeux/zoom/index.html',
+      description: "Un détail en gros plan : devine ce que c'est. Plus tu trouves vite, plus tu marques de points."
     },
     {
-      id: 'avant-apres',
-      nom: "Avant / Aujourd'hui",
+      id: 'memory-sonore',
+      nom: 'Le memory sonore',
       format: 'Numérique',
-      jeu: 'jeux/slide avant apres/index.html',
-      description: "Fais glisser la barre sur 8 photos d'époque et découvre les bâtiments du bagne tels qu'ils sont aujourd'hui."
+      jeu: 'jeux/memory-sonore/index.html',
+      description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
     },
     {
       id: 'tri-objets',
@@ -112,20 +126,6 @@ window.FORUM_CONFIG = {
       description: "Dans la grande scène dessinée, repère l'objet qui n'existait pas à l'époque."
     },
     {
-      id: 'memory-sonore',
-      nom: 'Le memory sonore',
-      format: 'Numérique',
-      jeu: 'jeux/memory-sonore/index.html',
-      description: "Cloche, vagues, travaux… associe chaque son d'époque au bon lieu."
-    },
-    {
-      id: 'zoom',
-      nom: 'Plein cadre',
-      format: 'Numérique',
-      jeu: 'jeux/zoom/index.html',
-      description: "Un détail en gros plan : devine ce que c'est. Plus tu trouves vite, plus tu marques de points."
-    },
-    {
       id: '4-images',
       nom: 'Bout à bout',
       format: 'Numérique',
@@ -133,11 +133,11 @@ window.FORUM_CONFIG = {
       description: "Quatre images, un seul mot : trouve ce qu'elles ont en commun."
     },
     {
-      id: 'argot',
-      nom: 'Les Mots du Bagne',
+      id: 'guillotine',
+      nom: 'Le Pendu du Bagne',
       format: 'Numérique',
-      jeu: 'jeux/argot/index.html',
-      description: "Carabousse, chiourme, doublage… retrouve le vrai sens de 10 mots du bagne."
+      jeu: 'jeux/guillotine/index.html',
+      description: "Trouve 10 mots du bagne, lettre par lettre, avant que la lame de la guillotine ne tombe."
     },
     {
       /* Sur le casque : ouvrir #/tablette dans le navigateur du casque et choisir
