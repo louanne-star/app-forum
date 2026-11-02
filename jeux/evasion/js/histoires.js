@@ -1,17 +1,6 @@
-/* ==========================================================
-   L'Évasion — les histoires
-   Adaptées du document « L'Évasion — Histoires du jeu »,
-   en version courte (une idée par phrase, peu de mots).
-
-   Pour chaque choix :
-   - profil    : "M" (marin), "R" (rusé) ou "A" (audacieux), +1 point
-   - gagne     : atout gagné (étapes du plan), ou null
-   - condition : atout nécessaire pour réussir, "!atout" = il ne faut PAS
-                 l'avoir, null = réussit toujours
-   - ok        : conséquence si le choix réussit
-   - rate      : conséquence si le choix échoue (=> fin « Repris »)
-   - image     : numéro de l'image dans assets/cartes/
-   ========================================================== */
+/* Les 3 histoires du jeu.
+   Pour chaque choix : profil (M, R ou A), gagne = objet gagné, condition = objet qu'il faut avoir
+   ("!objet" = il ne faut pas l'avoir), ok / rate = ce qui se passe, image = numéro de la carte. */
 const HISTOIRES = [
   /* ------------------------------------------------------ */
   {

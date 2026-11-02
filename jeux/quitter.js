@@ -1,11 +1,5 @@
-/* Bouton « Quitter » commun aux jeux de la tablette, dans la charte des « Mots du Bagne ».
-   Dans la tablette (jeu ouvert dans l'appli) : demande à l'appli de revenir au menu des jeux.
-   Jeu ouvert seul : va directement sur index.html#/tablette.
-
-   Utilisation, en bas de la page du jeu :
-     <script src="../quitter.js" data-dans=".top-right"></script>   → ajouté dans ce conteneur
-     <script src="../quitter.js" data-style="top:…;right:…"></script> → flottant, position ajustée
-     <script src="../quitter.js"></script>                          → flottant en haut à droite      */
+/* Bouton Quitter des jeux : revient au menu des jeux de la tablette.
+   data-dans=".top-right" pour le mettre dans un bloc, data-style="..." pour le placer. */
 (() => {
   "use strict";
   const script = document.currentScript;

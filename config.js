@@ -1,41 +1,26 @@
-/* =====================================================================
-   FORÇATS'NOU — CONFIGURATION
-   C'est le SEUL fichier à modifier pour adapter l'appli au forum.
-   ===================================================================== */
+/* Réglages de l'appli : Supabase, code équipe, niveaux et activités */
 window.FORUM_CONFIG = {
 
-  /* ---------- 1. Connexion Supabase ----------
-     Laisser vide = MODE DÉMO : tout reste dans le navigateur, pratique
-     pour tester l'appli seule mais RIEN n'est partagé entre téléphones.
-     Le jour du forum : coller l'URL et la clé "anon public" du projet
-     (Supabase > Project Settings > API). */
+  /* Supabase (vide = mode démo, tout reste dans le navigateur) */
   supabaseUrl: 'https://kcmjeykhnoffoolgxaeu.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbWpleWtobm9mZm9vbGd4YWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNzA1MzgsImV4cCI6MjEwODY0NjUzOH0.IzWeR5VDmQvvOeHIGErIDQseWL615Sd0EEjiR4yya5o',
 
-  /* ---------- 2. Adresse publique du site ----------
-     Sert à générer les QR codes. Mettre l'adresse Netlify, par ex.
-     'https://forcats-nou.netlify.app/'. Vide = adresse de la page actuelle. */
+  /* Adresse du site pour les QR codes (vide = adresse actuelle) */
   baseUrl: '',
 
-  /* ---------- 3. Code d'accès de l'espace équipe (#/equipe) ---------- */
+  /* Code de l'espace équipe et des tablettes */
   codeEquipe: '1864',
 
-  /* ---------- 4. Nombre minimum d'activités pour terminer le parcours ---------- */
+  /* Nombre d'activités minimum pour finir */
   minActivites: 3,
 
-  /* ---------- 5. Message affiché quand le visiteur termine ---------- */
+  /* Message de fin */
   messageFin: "Sors par la porte arrière du stand : l'équipe t'y remet ta carte matricule.",
 
-  /* ---------- 6. Phrase de consentement (case à cocher à l'inscription) ---------- */
+  /* Case à cocher à l'inscription */
   consentement: "J'accepte que ma photo et mon nom servent uniquement à imprimer ma carte matricule. Ils seront supprimés après le forum.",
 
-  /* ---------- 7. Les niveaux (selon le nombre d'activités faites) ----------
-     min         : nombre d'activités validées pour atteindre ce niveau
-     titre       : le niveau en clair, en mots d'époque (apprenti, compagnon, maître)
-     nom         : le grade au bagne
-     description : petit texte affiché au visiteur à la fin
-     Le visiteur reçoit le niveau le plus haut qu'il a atteint.
-     ⚠ Ajuster les "min" quand la vraie liste d'activités est connue. */
+  /* Niveaux : min = nombre d'activités à faire pour l'avoir */
   niveaux: [
     {
       id: 'classe3',
@@ -60,16 +45,8 @@ window.FORUM_CONFIG = {
     }
   ],
 
-  /* ---------- 8. Les activités du stand ----------
-     id          : identifiant court, sans espace ni accent (il est dans le QR code)
-     nom         : nom affiché
-     format      : 'Papier', 'Numérique' ou 'Réalité virtuelle' (pour l'équipe, pas affiché aux visiteurs)
-     jeu         : (numérique) page du jeu, ouverte sur les tablettes du stand (#/tablette).
-     lien        : (réalité virtuelle) site externe, proposé lui aussi dans #/tablette.
-     description : l'explication donnée au visiteur dans la liste des activités
-     Chaque activité a son QR code (#/equipe/qr) : le visiteur le scanne
-     quand il a fini l'activité, pour la valider.
-     ⚠ Ne pas changer l'id d'une activité après avoir imprimé ses QR codes. */
+  /* Activités du stand, dans l'ordre du parcours.
+     L'id est dans le QR code : ne plus le changer après l'impression ! */
   activites: [
     {
       id: 'avant-apres',
@@ -140,8 +117,7 @@ window.FORUM_CONFIG = {
       description: "Trouve 10 mots du bagne, lettre par lettre, avant que la lame de la guillotine ne tombe."
     },
     {
-      /* Sur le casque : ouvrir #/tablette dans le navigateur du casque et choisir
-         cette activité (ou aller directement sur le lien). */
+      /* Sur le casque on ouvre directement le lien */
       id: 'vr',
       nom: "L'île Nou en réalité virtuelle",
       format: 'Réalité virtuelle',

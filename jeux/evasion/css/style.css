@@ -1,25 +1,19 @@
-/* ==========================================================
-   L'Évasion — feuille de style
-   Mise en page « scène » : toute l'interface est dessinée dans
-   une zone de 1536 × 1024 (le format du proto), mise à l'échelle
-   par le JS (--u = taille d'un pixel de la maquette).
-   Le décor, lui, couvre tout l'écran. Sur un écran plus large
-   que 3:2, la scène se cale à droite pour laisser voir le forçat.
-   ========================================================== */
+/* Style de L'Évasion. Tout est placé dans une scène de 1536 × 1024
+   que le JS agrandit ou réduit (--u = 1 px de la maquette). */
 :root {
-  --marine:   #1b3557;   /* bleu nuit des boutons et du texte fort */
+  --marine:   #1b3557;   /* boutons et texte fort */
   --encre:    #26354b;   /* texte courant sur papier */
   --creme:    #f6ecd4;   /* texte sur bleu, pastilles */
-  --sepia:    #6e5130;   /* surtitres, filets (contraste ≥ 4,5:1 sur le parchemin) */
+  --sepia:    #6e5130;   /* surtitres et filets */
   --rouge:    #9b2f22;   /* « Repéré ! », fin Repris */
   --nuit:     #0d1622;   /* fond de secours */
-  --voile-decor: .15;    /* opacité du voile bleu marine sur les décors (0 = aucun) */
+  --voile-decor: .15;    /* voile bleu sur le décor */
 
   --f-pinceau: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
-  --f-texte:   "EB Garamond", Garamond, Georgia, "Times New Roman", serif;   /* comme le Pendu du Bagne */
-  --f-titre:   "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;    /* gros titres, comme le Pendu */
+  --f-texte:   "EB Garamond", Garamond, Georgia, "Times New Roman", serif;   /* comme le Pendu */
+  --f-titre:   "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;    /* titres */
 
-  --u: 1px;              /* remplacé par le JS */
+  --u: 1px;              /* changé par le JS */
   color-scheme: light;
 }
 
@@ -57,13 +51,12 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   position: fixed;
   inset: 0;
   background: var(--nuit) center / cover no-repeat;
-  background-position: 18% 50%;   /* garde le forçat (tiers gauche) visible */
+  background-position: 18% 50%;   /* garde le forçat visible */
   opacity: 0;
   transition: opacity .8s ease;
 }
 .decor.visible { opacity: 1; }
-/* Voile bleu marine sur la photo : unifie les décors et fait
-   ressortir les parchemins. Régler l'opacité avec --voile-decor. */
+/* Voile bleu sur la photo pour faire ressortir les parchemins */
 .decor::after {
   content: "";
   position: absolute;
@@ -85,7 +78,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 /* ---------- Éléments communs ---------- */
 .parchemin {
   position: absolute;
-  aspect-ratio: 1200 / 801;   /* proportions de parchemin.webp : l'image n'est jamais déformée */
+  aspect-ratio: 1200 / 801;   /* pour ne pas déformer le parchemin */
   background: url("../assets/ui/parchemin.webp") center / 100% 100% no-repeat;
   filter: drop-shadow(0 calc(var(--u) * 10) calc(var(--u) * 18) rgba(0, 0, 0, .45));
   display: flex;
@@ -102,8 +95,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   text-wrap: balance;
 }
 
-/* Les tailles de texte ont un minimum en px : même mise à l'échelle,
-   le texte reste lisible (les tailles du mode compact en dépendent). */
+/* Taille minimum pour que le texte reste lisible */
 .texte {
   margin: 0;
   font-size: max(15px, calc(var(--u) * 23));
@@ -157,7 +149,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .btn-pinceau.secondaire { filter: grayscale(.6) brightness(1.25) drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 4) rgba(0, 0, 0, .3)); }
 @media (hover: hover) { .btn-pinceau:hover { transform: scale(1.04); } }
 
-/* ---------- Boutons ronds : accueil (gauche), son (droite) ---------- */
+/* ---------- Boutons ronds (accueil et son) ---------- */
 .btn-rond {
   position: fixed;
   z-index: 15;
@@ -229,32 +221,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   white-space: nowrap;
 }
 
-/* ---------- Médaillons des fins découvertes ---------- */
-.medaillons { display: inline-flex; gap: calc(var(--u) * 6); vertical-align: middle; }
-.medaillon {
-  display: grid;
-  place-items: center;
-  width: max(22px, calc(var(--u) * 32));
-  height: max(22px, calc(var(--u) * 32));
-  border-radius: 50%;
-  border: max(1.5px, calc(var(--u) * 2.5)) dashed rgba(27, 53, 87, .5);
-  color: rgba(27, 53, 87, .6);
-  font-family: var(--f-pinceau);
-  font-size: max(13px, calc(var(--u) * 18));
-  line-height: 1;
-}
-.medaillon.trouve {
-  border-style: solid;
-  border-color: var(--marine);
-  background: var(--marine);
-  font-family: var(--f-texte);
-  font-size: max(12px, calc(var(--u) * 16));
-}
-.medaillon.repris.trouve { border-color: var(--rouge); background: var(--rouge); }
-
-/* ==========================================================
-   ÉCRAN ACCUEIL
-   ========================================================== */
+/* ---------- Écran accueil ---------- */
 .parchemin-accueil {
   left: calc(var(--u) * 600);
   top: calc(var(--u) * 205);
@@ -294,17 +261,8 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   line-height: 1.05;
   color: var(--marine);
 }
-.choix-histoire-fins { display: inline-flex; align-items: center; gap: calc(var(--u) * 10); }
-.choix-histoire-compte {
-  font-size: max(12px, calc(var(--u) * 15));
-  font-weight: 700;
-  color: var(--sepia);
-  white-space: nowrap;
-}
 
-/* ==========================================================
-   ÉCRAN INTRO
-   ========================================================== */
+/* ---------- Écran intro ---------- */
 .bandeau-grand {
   position: absolute;
   left: calc(var(--u) * 820);
@@ -336,9 +294,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 }
 .parchemin-intro .btn-pinceau { margin-top: calc(var(--u) * 6); }
 
-/* ==========================================================
-   ÉCRAN ÉTAPE
-   ========================================================== */
+/* ---------- Écran étape ---------- */
 .entete {
   position: absolute;
   left: calc(var(--u) * 930);
@@ -430,7 +386,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   color: var(--marine);
 }
 
-/* Le sac : les atouts gagnés pendant le plan */
+/* Le sac avec les objets gagnés */
 .sac {
   display: flex;
   align-items: center;
@@ -537,7 +493,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
   line-height: 1.34;
   text-wrap: pretty;
 }
-/* Indice : l'atout que ce chemin demande (à comparer avec le sac) */
+/* Indice : l'objet demandé */
 .carte-indice {
   position: absolute;
   right: 4%;
@@ -566,10 +522,8 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .carte.choisie { transform: rotate(0deg) scale(1.05); z-index: 2; }
 .carte.ecartee { opacity: .35; filter: grayscale(.8) drop-shadow(0 0 0 transparent); transform: rotate(var(--r)) scale(.95); }
 
-/* ==========================================================
-   ÉCRAN FIN
-   ========================================================== */
-/* hauteur selon le contenu, centrée verticalement, calée à droite */
+/* ---------- Écran fin ---------- */
+/* centré et calé à droite */
 .ecran-fin { display: flex; }
 .parchemin-fin {
   position: relative;
@@ -582,14 +536,6 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .parchemin-fin .titre-pinceau { font-size: calc(var(--u) * 44); }
 .parchemin-fin .texte { font-size: max(16px, calc(var(--u) * 25)); }
 .ecran-fin.repris .titre-pinceau { color: var(--rouge); }
-.nouvelle-fin {
-  margin: 0;
-  font-family: var(--f-pinceau);
-  font-size: max(18px, calc(var(--u) * 28));
-  color: #8a4b00;
-  animation: atout-gagne .7s cubic-bezier(.2, .9, .3, 1.4) .5s both;
-  transform-origin: left center;
-}
 .score {
   margin: 0;
   font-size: max(13px, calc(var(--u) * 17));
@@ -611,16 +557,6 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .chemin li.rate { color: var(--rouge); font-weight: 700; }
 .chemin li.rate::after { content: " ✗"; }
 
-.collection {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: calc(var(--u) * 8);
-  font-size: max(13px, calc(var(--u) * 17));
-  font-weight: 700;
-  color: var(--sepia);
-}
 .vrai {
   padding: calc(var(--u) * 16) calc(var(--u) * 20);
   border-left: calc(var(--u) * 5) solid var(--marine);
@@ -680,16 +616,14 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 }
 .regles li { display: flex; gap: .5em; }
 
-/* ==========================================================
-   POP-UPS
-   ========================================================== */
+/* ---------- Popups ---------- */
 .voile {
   position: fixed;
   inset: 0;
   z-index: 20;
   background: rgba(8, 14, 24, .45);
   -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);   /* floute le jeu derrière la fenêtre */
+  backdrop-filter: blur(8px);   /* flou derrière la popup */
   animation: fondu .3s ease both;
 }
 @keyframes fondu { from { opacity: 0; } }
@@ -735,12 +669,7 @@ button:focus-visible { outline: calc(var(--u) * 3) solid var(--creme); outline-o
 .rangee-boutons { display: flex; justify-content: center; flex-wrap: wrap; gap: calc(var(--u) * 14) calc(var(--u) * 18); }
 @keyframes deroule { from { opacity: 0; transform: scale(.88) translateY(calc(var(--u) * 20)); } }
 
-/* ==========================================================
-   MODE COMPACT (petit écran, petite fenêtre, zoom du navigateur)
-   Le JS ajoute la classe .compact quand la scène serait trop
-   petite pour être lue. Les éléments ne sont plus placés au
-   pixel près : ils s'empilent et la scène défile.
-   ========================================================== */
+/* ---------- Mode compact (petit écran) : tout s'empile et on scrolle ---------- */
 .compact .scene {
   inset: 0;
   width: auto;
