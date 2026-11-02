@@ -1,23 +1,11 @@
-/* ==========================================================
-   L'Évasion — logique du jeu
-   Déroulé : accueil → intro → 5 étapes (2 de plan, 3 de fuite) → fin.
-   - chaque choix donne 1 point à un profil (M, R ou A)
-   - les choix du plan donnent des atouts, visibles dans le sac
-   - pendant la fuite, un choix peut demander un atout :
-     sans lui, le forçat est repris (fin « Repris ») et on lui
-     explique quel choix du plan lui a manqué
-   - si les 5 étapes sont passées, le profil qui a le plus de
-     points donne la fin ; en cas d'égalité, celui du choix le
-     plus récent parmi les ex æquo
-   - pas de collection de fins : chaque visiteur ne fait qu'une ou deux parties
-   ========================================================== */
+/* Le fonctionnement de L'Évasion : accueil, intro, 5 étapes puis la fin.
+   Chaque choix donne un point à un profil, et sans le bon objet on est repris. */
 (() => {
   "use strict";
 
   const LARGEUR = 1536, HAUTEUR = 1024;     // taille de la maquette
   const NB_ETAPES = 5;
-  /* En dessous de cette échelle, le texte devient trop petit :
-     on passe en mise en page « compacte » (éléments empilés, défilement) */
+  /* En dessous, le texte est trop petit : on passe en mode compact */
   const SEUIL_COMPACT = 0.68;
 
   const $ = (id) => document.getElementById(id);
@@ -38,16 +26,12 @@
     etape: 0,
     atouts: new Set(),
     chemin: [],         // { choix, ok } dans l'ordre
-    verrou: false,      // bloque les doubles appuis pendant les animations
+    verrou: false,      // évite les doubles clics
     suite: null         // action du bouton « Continuer »
   };
 
   // ---------- Mise à l'échelle ----------
-  /* La scène (1536 × 1024) est réduite ou agrandie pour tenir dans
-     l'écran. Si l'écran est plus large, elle se cale vers la droite
-     (le forçat du décor est à gauche).
-     Sur petit écran (téléphone, petite fenêtre, zoom du navigateur),
-     on passe en mode compact : échelle fixe et défilement vertical. */
+  /* On adapte la scène à la taille de l'écran (mode compact sur petit écran) */
   function adapter() {
     const l = window.innerWidth, h = window.innerHeight;
     let u = Math.min(l / LARGEUR, h / HAUTEUR);
@@ -55,8 +39,7 @@
     racine.classList.toggle("compact", compact);
 
     if (compact) {
-      // récit (510) + deux cartes (622) côte à côte si la largeur le permet
-      // (marge pour les bords et une éventuelle barre de défilement)
+      // récit et cartes côte à côte si ça rentre
       const cote = (l - 80) / 1160;
       u = cote >= 0.62 ? Math.min(0.9, cote) : Math.min(0.9, (l - 48) / 622);
       racine.style.setProperty("--u", u + "px");
@@ -78,8 +61,7 @@
   window.addEventListener("orientationchange", () => setTimeout(() => { adapter(); ajusterCartes(); }, 250));
   adapter();
 
-  /* Si le texte d'une carte touche le bouton (police plus large,
-     petit écran…), on réduit un peu sa taille, par paliers. */
+  /* Si le texte d'une carte est trop long, on réduit la police */
   function ajusterCartes() {
     document.querySelectorAll(".carte").forEach((carte) => {
       const corps = carte.querySelector(".carte-corps");
@@ -109,18 +91,17 @@
     calqueActif = 1 - calqueActif;
   }
 
-  // Précharge les images d'une histoire pour éviter les cartes vides
+  // précharge les images de l'histoire
   function precharger(h) {
     const urls = [`assets/decors/${h.decors.plan}.webp`, `assets/decors/${h.decors.fuite}.webp`];
     h.etapes.forEach((e) => e.choix.forEach((c) => urls.push(imageCarte(c.image))));
     Object.values(FINS).forEach((f) => urls.push(`assets/fins/${f.image}.webp`));
     urls.forEach((u) => { const i = new Image(); i.src = u; });
   }
-  /* Typographie française : espace insécable avant ? ! : ; et dans « » */
+  /* Espaces insécables avant ? ! : ; */
   const typo = (t) => t.replace(/ ([?!:;»])/g, " $1").replace(/« /g, "« ");
 
-  /* La question en écriture pinceau : les deux derniers mots restent
-     ensemble (évite « choisis- / tu ? ») */
+  /* Les deux derniers mots de la question restent ensemble */
   function poserQuestion(el, q) {
     const mots = typo(q).split(" ");
     const fin = mots.splice(-1).join(" ");
@@ -134,8 +115,7 @@
   const imageCarte = (n) => `assets/cartes/carte-${String(n).padStart(2, "0")}.webp`;
 
   // ---------- Glossaire ----------
-  /* Les mots difficiles deviennent des boutons soulignés ; chaque mot
-     n'est souligné qu'une fois par paragraphe. */
+  /* Les mots difficiles sont soulignés, on peut cliquer dessus */
   const formes = new Map();
   GLOSSAIRE.forEach((g) => g.formes.forEach((f) => formes.set(f.toLowerCase(), g)));
   const motifGlossaire = new RegExp(
@@ -162,7 +142,7 @@
         b.textContent = m[1];
         b.setAttribute("aria-expanded", "false");
         b.addEventListener("click", (e) => { e.stopPropagation(); basculerBulle(b, g); });
-        // la ponctuation qui suit reste collée au mot (pas de « , » seule en début de ligne)
+        // la ponctuation reste collée au mot
         const groupe = document.createElement("span");
         groupe.className = "mot-groupe";
         dernier = m.index + m[1].length;
@@ -177,7 +157,7 @@
     });
   }
 
-  /* Remplit un élément avec un texte du jeu (typographie + glossaire) */
+  /* Met un texte du jeu dans un élément */
   function ecrire(el, t) {
     el.textContent = typo(t);
     glossariser(el);
@@ -195,7 +175,7 @@
     bulle.append(titre, " " + typo(g.def));
     bulle.hidden = false;
 
-    // au-dessus du mot s'il y a la place, sinon en dessous
+    // au-dessus du mot, sinon en dessous
     const r = bouton.getBoundingClientRect();
     const b = bulle.getBoundingClientRect();
     const marge = 10;
@@ -224,8 +204,7 @@
   }
 
   // ---------- Écrans ----------
-  /* Boutons qui ouvrent un panneau (règles, histoire vraie, parcours) :
-     un seul panneau ouvert à la fois sur un même écran */
+  /* Un seul panneau ouvert à la fois */
   const ctas = [...document.querySelectorAll(".btn-cta[aria-controls]")];
   function fermerPanneaux() {
     ctas.forEach((b) => {
@@ -294,7 +273,7 @@
 
   // ---------- Déroulé ----------
   function reinitialiser(h) {
-    parent.postMessage('debut', '*'); // tablette du stand : recache les boutons de l'équipe
+    parent.postMessage('debut', '*'); // cache les boutons de l'équipe
     etat.histoire = h;
     etat.etape = 0;
     etat.atouts = new Set();
@@ -312,7 +291,7 @@
     $("btn-commencer").focus({ preventScroll: true });
   }
 
-  /* Autre histoire que celle qu'on vient de jouer, au hasard */
+  /* Une autre histoire au hasard */
   function histoireAuHasard() {
     const possibles = HISTOIRES.filter((h) => !etat.histoire || h.id !== etat.histoire.id);
     lancerHistoire(possibles[Math.floor(Math.random() * possibles.length)]);
@@ -377,8 +356,7 @@
       ecrire(carte.querySelector(".carte-texte"), c.texte);
       carte.querySelector("button").setAttribute("aria-label", "Choisir : " + c.titre);
 
-      /* indice discret : l'icône de l'atout que ce choix demande,
-         à rapprocher du contenu du sac */
+      /* petit indice : l'icône de l'objet demandé */
       if (c.condition && ATOUTS[c.condition]) {
         const indice = document.createElement("span");
         indice.className = "carte-indice";
@@ -387,12 +365,12 @@
         indice.setAttribute("aria-hidden", "true");
         carte.appendChild(indice);
       }
-      // toute la carte est tactile, pas seulement le bouton
+      // on peut toucher toute la carte
       carte.addEventListener("click", () => choisir(i));
       zone.appendChild(carte);
     });
 
-    // relance l'animation d'apparition de l'écran
+    // relance l'animation
     const el = ecrans.etape;
     el.hidden = true; void el.offsetWidth;
     montrer("etape");
@@ -401,8 +379,7 @@
     etat.verrou = false;
   }
 
-  /* Pourquoi le choix a échoué : quel atout manquait, et quel choix
-     du plan aurait permis de l'avoir */
+  /* Explique quel objet manquait */
   function expliquerEchec(c) {
     const a = ATOUTS[c.condition];
     if (!a) return "";
@@ -419,7 +396,7 @@
     SON.jouer("carte");
     const c = etat.histoire.etapes[etat.etape].choix[i];
 
-    // animation : la carte choisie avance, l'autre s'efface
+    // la carte choisie avance, l'autre disparaît
     [...$("cartes").children].forEach((carte, j) =>
       carte.classList.add(j === i ? "choisie" : "ecartee"));
 
@@ -475,7 +452,7 @@
     return points;
   }
 
-  /* Profil qui a le plus de points ; égalité → le plus récent */
+  /* Profil avec le plus de points (égalité = le plus récent) */
   function profilFinal() {
     const points = compterPoints();
     const max = Math.max(...Object.values(points));
@@ -496,13 +473,13 @@
     $("fin-surtitre").textContent = h.titre;
     $("fin-titre").textContent = f.titre;
     ecrire($("fin-texte"), f.texte);
-    $("fin-vrai").innerHTML = typo(f.vrai);   // contient seulement de l'italique
+    $("fin-vrai").innerHTML = typo(f.vrai);   // juste de l'italique
     glossariser($("fin-vrai"));
 
     const points = compterPoints();
     $("fin-score").textContent = ["M", "R", "A"].map((p) => `${NOMS_PROFILS[p]} ${points[p]}`).join(" · ");
 
-    // le chemin suivi, étape par étape
+    // les choix faits
     const chemin = $("fin-chemin");
     chemin.innerHTML = "";
     etat.chemin.forEach(({ choix, ok }) => {
@@ -514,13 +491,13 @@
     });
 
     montrer("fin");
-    parent.postMessage('fini', '*'); // tablette du stand : affiche les boutons de l'équipe
+    parent.postMessage('fini', '*'); // affiche les boutons de l'équipe
     SON.jouer(repris ? "perdu" : "victoire");
     annoncer(f.titre);
     $("btn-reessayer").focus({ preventScroll: true });
   }
 
-  /* Réessayer la même histoire, directement à l'étape 1 */
+  /* Rejouer la même histoire */
   function reessayer() {
     reinitialiser(etat.histoire);
     afficherEtape();
@@ -555,19 +532,18 @@
   btnSon.addEventListener("click", () => { SON.basculer(); majBoutonSon(); });
   majBoutonSon();
 
-  // Le son ne peut démarrer qu'après une première interaction
+  // le son marche seulement après un premier clic
   ["pointerdown", "keydown"].forEach((t) => document.addEventListener(t, () => SON.reveiller(), { capture: true }));
 
   // ---------- Clavier ----------
-  // ← / → = passer d'une carte à l'autre, Entrée = choisir,
-  // 1 / 2 = choisir directement, Échap = retour à l'accueil
+  // flèches, Entrée, 1 / 2 et Échap
   const boutonsCartes = () => [...$("cartes").querySelectorAll(".carte .btn-pinceau")];
   function focusCarte(i) {
     const b = boutonsCartes()[i];
     if (b) b.focus({ preventScroll: true });
   }
 
-  /* Garde le focus dans la fenêtre ouverte (Tab / Maj+Tab) */
+  /* Garde le focus dans la popup */
   function pieger(e, popup) {
     const focusables = [...popup.querySelectorAll("button")].filter((b) => !b.closest("[hidden]"));
     if (!focusables.length) return;
@@ -605,7 +581,7 @@
 
   // ---------- Démarrage ----------
   afficherAccueil();
-  // Explication rapide à l'ouverture (une fois par visiteur : « Visiteur suivant » recharge le jeu)
+  // popup des règles au lancement
   $("btn-regles-ok").addEventListener("click", () => { SON.jouer("carte"); fermer(popupRegles); });
   ouvrir(popupRegles);
 })();

@@ -1,12 +1,9 @@
-/* Forçats'Nou — charte « Carte postale gravée ».
-   Papier crème et encre bleue, comme une gravure du XIXe imprimée en une couleur.
-   L'ocre est réservé aux cachets de la poste : ce qui est validé.
-   Mobile d'abord : une colonne de 480px max ; l'espace équipe s'élargit. */
+/* Style de l'appli : une carte postale gravée, papier crème et encre bleue */
 :root {
   --creme: #f4efe3;
   --papier: #fbf8f1;
   --encre: #23348c;        /* bleu encre : titres, boutons, gravure */
-  --encre-2: #18245e;      /* bleu encre appuyé (survol, relief des boutons) */
+  --encre-2: #18245e;      /* bleu plus foncé (survol) */
   --texte: #1c2140;
   --texte-2: #575c78;      /* texte secondaire */
   --trait: rgba(35, 52, 140, .2);
@@ -21,10 +18,9 @@
   --sans: 'Jost', 'Futura', 'Century Gothic', sans-serif;
 
   --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-pill: 999px;
-  color-scheme: only light; /* interdit l'assombrissement forcé des navigateurs */
+  color-scheme: only light; /* pas de mode sombre */
 }
-/* Samsung Internet ignore « only light » mais n'assombrit pas un site qui a son propre
-   thème sombre : on en déclare un… qui garde exactement les couleurs claires. */
+/* Pour Samsung Internet : un faux mode sombre qui garde les couleurs claires */
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: only light; }
   html, body { background-color: var(--creme); color: var(--texte); }
@@ -97,14 +93,14 @@ p { margin: 0; }
 
 /* ---------- Gravure ---------- */
 .gravure { display: block; width: calc(100% + 40px); max-width: none; height: auto; margin: -20px -20px -8px; }
-/* Fin : la gravure remonte derrière l'itinéraire (la liste passe devant). */
+/* Fin : la gravure passe derrière la liste */
 .gravure.fin { position: relative; z-index: 0; margin-top: -55%; opacity: .75; }
 .page:has(> .gravure.fin) > .stack:has(.activites) { position: relative; z-index: 1; }
-/* Accueil : la gravure remonte sous le titre, dans son ciel vide. */
+/* Accueil : la gravure sous le titre */
 .hero .ciel { position: relative; overflow: hidden; margin: -180px -20px -8px; }
 .hero .ciel .gravure { width: 100%; margin: 0; opacity: .75; }
 
-/* Animations de l'accueil, lancées quand la page apparaît (.revele). */
+/* Animations de l'accueil */
 .revele .hero .mot { display: inline-block; animation: monte .8s cubic-bezier(.2, .7, .2, 1) both; }
 .revele .hero .mot:nth-child(2) { animation-delay: .12s; }
 .revele .hero .mot:nth-child(3) { animation-delay: .24s; }
@@ -112,9 +108,8 @@ p { margin: 0; }
 @keyframes monte { from { opacity: 0; transform: translateY(.45em); clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 -20% 0); } }
 @keyframes imprime { to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
 
-/* Tampon de la poste, au-dessus à droite des boutons photo. */
+/* Tampon au-dessus des boutons photo */
 .photo-zone { position: relative; }
-/* Posé au-dessus de la zone (à droite de « Ta photo ») : ne touche jamais les boutons, quelle que soit la largeur. */
 .cachet.tampon { position: absolute; bottom: calc(100% - 16px); right: 2px; width: 74px; margin: 0; opacity: 0; pointer-events: none; }
 .revele .cachet.tampon { animation: frappe .45s cubic-bezier(.2, 1.4, .4, 1) 1.6s forwards; }
 @media (prefers-reduced-motion: reduce) {
@@ -125,11 +120,11 @@ p { margin: 0; }
 
 /* ---------- Popup d'accueil ---------- */
 .popup { width: min(100% - 32px, 420px); max-height: calc(100% - 32px); padding: 28px 22px 22px; border: 1px solid var(--trait-fort); border-radius: var(--r-lg); background: var(--papier); color: var(--texte); }
-html:has(.popup[open]), html:has(.popup[open]) body { overflow: hidden; } /* la page derrière ne défile plus */
+html:has(.popup[open]), html:has(.popup[open]) body { overflow: hidden; } /* bloque le scroll derrière */
 .popup { overscroll-behavior: contain; }
-.popup::backdrop { background: var(--creme); } /* opaque : la page reste cachée tant que la popup est ouverte */
+.popup::backdrop { background: var(--creme); } /* cache la page derrière */
 .popup h2 { outline: none; padding-right: 40px; margin-bottom: 8px; color: var(--encre); }
-/* Ouverture : la bulle gonfle, puis le titre, le sous-titre et enfin les étapes. */
+/* Ouverture de la popup */
 .popup[open] { animation: bulle .5s cubic-bezier(.34, 1.56, .64, 1) both; }
 .popup[open]::backdrop { animation: voile .4s ease both; }
 .popup[open] > :not(.popup-fermer) { animation: apparait .5s ease both; }
@@ -144,7 +139,7 @@ html:has(.popup[open]), html:has(.popup[open]) body { overflow: hidden; } /* la 
 @keyframes bulle { from { opacity: 0; transform: scale(.4); border-radius: 50%; } 60% { opacity: 1; } to { transform: none; } }
 @keyframes voile { from { opacity: 0; } }
 @keyframes apparait { from { opacity: 0; transform: translateY(10px); } }
-/* Fermeture : la page, cachée derrière, apparaît élément par élément. */
+/* Fermeture : la page apparaît petit à petit */
 .revele:has(.hero) .bandeau, .revele .page > :not(dialog) { animation: apparait .5s ease both; }
 .revele .page > :nth-child(2) { animation-delay: .12s; }
 .revele .page > :nth-child(3) { animation-delay: .24s; }
@@ -208,7 +203,7 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
   transition: background-color .15s ease, color .15s ease, transform .1s ease, box-shadow .1s ease;
 }
 .btn[disabled] { opacity: .4; cursor: not-allowed; }
-/* bouton principal : léger relief imprimé sous le bouton */
+/* bouton principal avec un petit relief */
 .btn-mer { background: var(--encre); color: var(--papier); border-color: var(--encre-2); box-shadow: 0 4px 0 var(--encre-2); margin-bottom: 4px; }
 .btn-mer:hover:not([disabled]) { background: #2a3d9e; }
 .btn-mer:active:not([disabled]) { transform: translateY(3px); box-shadow: 0 1px 0 var(--encre-2); }
@@ -233,7 +228,7 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
 @keyframes frappe { from { transform: rotate(-10deg) scale(1.6); opacity: 0; } to { transform: rotate(-10deg) scale(1); opacity: 1; } }
 
 /* ---------- Timbres (progression, photo) ---------- */
-/* Bords dentelés : des trous ronds sur le pourtour, le centre reste plein. */
+/* bords dentelés du timbre */
 .timbre, .photo-cadre {
   --fond: var(--papier);
   padding: 6px;
@@ -248,9 +243,9 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
   display: grid; place-items: center; height: 100%;
   border: 1px solid var(--trait); font: italic 400 24px/1 var(--serif); color: var(--trait-fort);
 }
-/* Carnet : un timbre par activité ; les paliers de grade ont leur numéro en doré. */
+/* Un timbre par activité, les paliers en doré */
 .timbres.carnet { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(0, 44px)); gap: 8px; }
-/* Fond teinté : sur le papier du panneau, un timbre papier ne montrerait pas ses dents. */
+
 .carnet .timbre {
   --fond: #ebe2cc; width: auto; height: auto; aspect-ratio: 44 / 54; padding: 5px;
   filter: drop-shadow(0 0 .5px var(--trait-fort)) drop-shadow(0 1px 1.5px rgba(28, 33, 64, .18));
@@ -259,7 +254,7 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
 .carnet .timbre.palier:not(.ok) > span { color: var(--ocre); border-color: rgba(179, 137, 63, .45); }
 .timbre.ok { --fond: var(--encre); }
 .timbre.ok > span { color: var(--papier); border-color: rgba(251, 248, 241, .35); position: relative; overflow: hidden; }
-/* oblitération : quelques vagues tamponnées en travers */
+/* tampon en vagues */
 .timbre.ok > span::after {
   content: ""; position: absolute; inset: 0;
   background: repeating-radial-gradient(circle at 120% 50%, transparent 0 7px, rgba(179, 137, 63, .9) 7px 8.5px);
@@ -273,7 +268,6 @@ input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible
   background: var(--papier); border: 1px solid var(--trait); border-radius: var(--r-md);
   padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 4px;
 }
-.activite .num { font: 500 12px/1.4 var(--sans); letter-spacing: .16em; color: var(--texte-2); }
 .activite h3 { padding-right: 64px; color: var(--ocre); }
 h2 .point { font-style: normal; color: var(--ocre); margin-right: .3em; }
 .activite .desc { color: var(--texte-2); font-size: 15px; }
@@ -346,8 +340,8 @@ body.avec-action .page { padding-bottom: 130px; }
 .sortie .registre { color: #e2c48a; font-weight: 500; }
 .vagues { position: absolute; left: 0; bottom: 10px; width: 200%; height: 18px; color: rgba(251, 248, 241, .3); }
 
-/* ---------- Animations des pages visiteur (.revele, posé par cadre()) ---------- */
-/* Activité validée : le tampon frappe, la carte encaisse le choc, puis le texte monte. */
+/* ---------- Animations des pages visiteur ---------- */
+/* Activité validée : le tampon frappe */
 .revele .feuille.centre:has(> .cachet.anim) { animation: apparait .4s ease both, choc .35s ease-out .62s; }
 .revele .feuille.centre > .cachet.anim { animation-delay: .3s; }
 .revele .feuille.centre:has(> .cachet) > :not(.cachet) { animation: apparait .5s ease both; }
@@ -357,13 +351,13 @@ body.avec-action .page { padding-bottom: 130px; }
 .revele .feuille.centre:has(> .cachet.anim) + .panneau { animation-delay: 1.15s; }
 @keyframes choc { 30% { transform: translateY(3px) scale(.985); } 60% { transform: translateY(-1px); } }
 
-/* Parcours : les timbres se posent un à un dans le carnet, puis les activités défilent. */
+/* Parcours : les timbres arrivent un par un */
 .revele .carnet .timbre { animation: pose .4s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(.3s + var(--i) * 45ms); }
 @keyframes pose { from { opacity: 0; transform: translateY(-8px) rotate(-8deg) scale(.7); } }
 .revele .activites .activite { animation: apparait .45s ease both; animation-delay: calc(.4s + min(var(--i), 5) * 70ms); }
 .revele .activite .cachet { animation: frappe .4s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(.65s + min(var(--i), 5) * 70ms); }
 
-/* Fin : les blocs apparaissent au défilement (.defile → .vu), les vagues roulent, la gravure s'imprime. */
+/* Fin : les blocs apparaissent au scroll */
 .defile { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .2, 1); }
 .defile.vu { opacity: 1; transform: none; }
 .revele .page > .defile, .revele .activites .activite.defile { animation: none; }
@@ -379,12 +373,12 @@ body.avec-action .page { padding-bottom: 130px; }
 @keyframes houle { to { transform: translateX(-50%); } }
 .revele .gravure.fin { -webkit-mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; mask: linear-gradient(90deg, #000 33%, transparent 66%) 100% 0 / 300% 100% no-repeat; animation: imprime 1.8s cubic-bezier(.4, 0, .2, 1) .2s forwards; }
 
-/* Scanner : le viseur s'ouvre, une ligne balaie le cadre. */
+/* Scanner : une ligne balaie le viseur */
 .revele .viseur { animation: vise .5s cubic-bezier(.2, 1.2, .4, 1) both; }
 @keyframes vise { from { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
 .viseur::after { content: ''; position: absolute; left: 8%; right: 8%; top: 8%; height: 2px; border-radius: 2px; background: #e2c48a; box-shadow: 0 0 12px #e2c48a; animation: balaie 2.2s ease-in-out .5s infinite alternate; }
 @keyframes balaie { to { top: 92%; } }
-/* QR repéré : le cadre passe au doré pendant qu'on tient la visée. */
+/* QR trouvé : le cadre devient doré */
 .viseur { transition: border-color .2s, transform .2s; }
 .viseur.trouve { border-color: #e2c48a; border-width: 3px; transform: translate(-50%, -50%) scale(.96); }
 .viseur.trouve::after { animation-duration: .7s; }
@@ -440,11 +434,11 @@ body.avec-action .page { padding-bottom: 130px; }
 .qr-carte h3 { font-size: 24px; }
 .qr-carte .registre { color: var(--texte-2); font-size: 11px; overflow-wrap: anywhere; }
 
-/* Tablettes du stand (#/tablette) */
+/* Tablettes du stand */
 .choix-jeu { display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid var(--trait); border-radius: var(--r-lg); background: var(--papier); color: var(--texte); text-decoration: none; transition: border-color .15s ease; }
 .choix-jeu:hover { border-color: var(--encre); }
 .choix-jeu .nom { font: 500 22px/1.2 var(--serif); color: var(--encre); }
-/* Le jeu prend tout l'écran ; les boutons de l'équipe flottent en bas à droite, seulement en fin de partie. */
+/* Jeu en plein écran, boutons de l'équipe en bas à droite */
 .tablette { position: fixed; inset: 0; background: var(--encre); }
 .tablette-jeu { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
 .tablette-vide { position: absolute; inset: 16px; justify-content: center; align-items: center; text-align: center; }
@@ -452,7 +446,7 @@ body.avec-action .page { padding-bottom: 130px; }
 .tablette-outils .btn { padding: 9px 18px; font-size: 12px; margin-bottom: 0; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
 .tablette-outils .btn-ligne { background: var(--papier); }
 .tablette-outils[hidden] { display: none; }
-/* Accès équipe en cours de partie : appui long (2 s) dans ce coin invisible. */
+/* Coin invisible : appui long pour l'équipe */
 .tablette-coin { position: absolute; top: 0; left: 0; width: 44px; height: 44px; z-index: 2; touch-action: none; }
 
 @media (prefers-reduced-motion: reduce) {

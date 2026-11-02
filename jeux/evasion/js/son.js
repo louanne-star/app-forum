@@ -1,17 +1,10 @@
-/* ==========================================================
-   L'Évasion — le son
-   Tout est fabriqué avec la Web Audio API (aucun fichier) :
-   - les mêmes bruitages que les autres jeux : clic, bon choix, mauvais choix, évadé, repris
-   Le navigateur n'autorise le son qu'après un premier appui :
-   SON.reveiller() est appelé à chaque interaction.
-   Le choix « son coupé » est mémorisé sur l'appareil.
-   ========================================================== */
+/* Sons de L'Évasion (les mêmes que les autres jeux) + bouton pour couper le son */
 const SON = (() => {
   "use strict";
 
   const CLE = "evasion-son";
   let actif = true;
-  try { actif = localStorage.getItem(CLE) !== "0"; } catch (e) { /* stockage bloqué */ }
+  try { actif = localStorage.getItem(CLE) !== "0"; } catch (e) { /* pas de stockage */ }
 
   let ctx = null, general = null;
 
@@ -30,8 +23,7 @@ const SON = (() => {
     if (ctx.state === "suspended") ctx.resume();
   }
 
-  /* Une note courte avec attaque douce */
-  /* Une note avec attaque douce. glisse = fréquence d'arrivée (facultatif). */
+  /* Joue une note (glisse = la note descend ou monte) */
   function note(freq, debut, duree, { type = "triangle", vol = 0.16, glisse = 0 } = {}) {
     if (!ctx || !actif) return;
     const t = ctx.currentTime + debut;
@@ -48,22 +40,21 @@ const SON = (() => {
     osc.stop(t + duree + 0.05);
   }
 
-  /* Mêmes bruitages que les autres jeux du stand (jeux/sons.js) */
   const effets = {
-    // carte choisie, bouton : petit clic discret
+    // clic
     carte: () => note(1400, 0, 0.05, { type: "sine", vol: 0.07, glisse: 900 }),
-    // bon choix : deux notes qui montent
+    // bon choix
     reussite: () => { note(659, 0, 0.16); note(988, 0.09, 0.32); },
-    // bon choix qui rapporte un objet : la même chose
+    // bon choix avec un objet
     atout: () => { note(659, 0, 0.16); note(988, 0.09, 0.32); },
-    // mauvais choix : deux notes graves qui descendent, adoucies
+    // mauvais choix
     echec: () => { note(233, 0, 0.22, { type: "square", vol: 0.05 }); note(175, 0.14, 0.34, { type: "square", vol: 0.05 }); },
-    // évadé : petit arpège puis accord
+    // évadé
     victoire: () => {
       [523, 659, 784].forEach((f, i) => note(f, i * 0.11, 0.3));
       [523, 659, 784, 1047].forEach((f) => note(f, 0.36, 0.9, { vol: 0.09 }));
     },
-    // repris : trois notes qui descendent lentement
+    // repris
     perdu: () => [392, 330, 262].forEach((f, i) => note(f, i * 0.2, i === 2 ? 0.8 : 0.3, { vol: 0.12 }))
   };
 
@@ -74,7 +65,7 @@ const SON = (() => {
 
   function basculer() {
     actif = !actif;
-    try { localStorage.setItem(CLE, actif ? "1" : "0"); } catch (e) { /* tant pis */ }
+    try { localStorage.setItem(CLE, actif ? "1" : "0"); } catch (e) { /* pas de stockage */ }
     reveiller();
     if (general) general.gain.setTargetAtTime(actif ? 1 : 0, ctx.currentTime, 0.1);
     return actif;

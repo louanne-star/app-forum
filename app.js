@@ -1,14 +1,5 @@
-/* Forçats'Nou — appli de forum (visiteur + espace équipe).
-   Routes (hash) :
-     #/                 accueil + inscription (avec photo)
-     #/parcours         guide : liste des activités, progression, fin
-     #/scanner          scanner de QR code intégré
-     #/activite/<id>    validation d'une activité (cible des QR codes)
-     #/fin              parcours terminé : niveau + sortie
-     #/retrouver        retrouver son dossier (autre téléphone / navigateur)
-     #/reset            oublie le dossier de ce navigateur (tests)
-     #/equipe[/impression|qr]   espace équipe (code d'accès)
-     #/tablette[/<id>]  jeux numériques sur les tablettes du stand (code d'accès) */
+/* Forçats'Nou : toute l'appli (pages visiteur, espace équipe et tablettes).
+   Les pages changent selon le # de l'adresse : #/parcours, #/scanner, #/equipe... */
 (() => {
   'use strict';
 
@@ -17,7 +8,7 @@
   const DEMO = !(C.supabaseUrl && C.supabaseAnonKey);
   const TITRE = "Forçats'Nou";
 
-  /* ================= Utilitaires ================= */
+  /* ---------- Utilitaires ---------- */
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
   const activite = id => C.activites.find(a => a.id === id);
@@ -49,14 +40,14 @@
   }
   const aller = route => { location.hash = '#/' + route; };
 
-  /* Le niveau atteint = le plus haut dont le minimum est atteint. */
+  /* Le niveau = le plus haut dont le minimum est atteint */
   function niveauPour(nbActivites) {
     const tries = C.niveaux.slice().sort((a, b) => a.min - b.min);
     return tries.filter(n => nbActivites >= n.min).pop() || tries[0];
   }
 
-  /* ================= Photo ================= */
-  /* Recadre au format photo d'identité (35 × 45 mm) et compresse en JPEG. */
+  /* ---------- Photo ---------- */
+  /* Recadre la photo au format identité et la compresse */
   const PHOTO_L = 700, PHOTO_H = 900;
   async function preparerPhoto(fichier) {
     const url = URL.createObjectURL(fichier);
@@ -65,14 +56,14 @@
       const ratio = PHOTO_L / PHOTO_H;
       let sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
       if (sw / sh > ratio) { const l = sh * ratio; sx = (sw - l) / 2; sw = l; }
-      else { const h = sw / ratio; sy = (sh - h) * 0.4; sh = h; } // un peu vers le haut : le visage y est souvent
+      else { const h = sw / ratio; sy = (sh - h) * 0.4; sh = h; } // on remonte un peu pour garder le visage
       const c = document.createElement('canvas'); c.width = PHOTO_L; c.height = PHOTO_H;
       c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, PHOTO_L, PHOTO_H);
       return await new Promise((ok, ko) => c.toBlob(b => b ? ok(b) : ko(new Error('toBlob')), 'image/jpeg', 0.85));
     } finally { URL.revokeObjectURL(url); }
   }
-  /* ================= Carte matricule ================= */
-  /* Positions mesurées sur le modèle Canva (carte/recto.png, 1050 × 600 px = 88,9 × 50,8 mm). */
+  /* ---------- Carte matricule ---------- */
+  /* Positions prises sur le modèle Canva (1050 × 600 px) */
   const CARTE = {
     fond: 'carte/recto.png', verso: 'carte/verso.png', l: 1050, h: 600,
     photo: { x: 43, y: 55, l: 351, h: 436 },
@@ -82,8 +73,7 @@
     brun: '#6d5b4a', encre: '#655b52', creme: '#f6eedd',
     police: "'Roboto Slab', Georgia, serif", serrage: 0.78,
   };
-  /* Fond et verso intégrés (carte/images.js, chargé par l'espace équipe) : en file://,
-     une image du disque dessinée dans un canvas le rendrait inutilisable. */
+  /* Images de la carte (carte/images.js), sinon les png */
   const imagesCarte = () => window.CARTE_IMAGES || { recto: CARTE.fond, verso: CARTE.verso };
   const chargerScript = src => new Promise(ok => {
     const s = document.createElement('script'); s.src = src; s.onload = s.onerror = ok; document.head.appendChild(s);
@@ -109,7 +99,7 @@
     x.strokeStyle = CARTE.brun; x.lineWidth = CARTE.cadre.ep;
     x.strokeRect(CARTE.cadre.x, CARTE.cadre.y, CARTE.cadre.l, CARTE.cadre.h);
 
-    /* Texte resserré comme sur le modèle ; rétréci si le nom est long. */
+    /* On resserre le texte, et on le rétrécit si le nom est trop long */
     const ecrire = (texte, gauche, base, taille, largeurMax, centre = false) => {
       let sx = CARTE.serrage;
       x.font = `800 ${taille}px ${CARTE.police}`;
@@ -129,7 +119,7 @@
     ecrire('#' + v.matricule, B.x + B.l / 2, B.y + B.h / 2 + 4, B.taille, B.l - 36, true);
     return c;
   }
-  /* Image de la carte, gardée en cache tant que nom / prénom / photo ne changent pas. */
+  /* On garde l'image de chaque carte en cache */
   const cacheCartes = new Map();
   function imageCarte(v) {
     const cle = [v.id, v.prenom, v.nom, v.matricule, v.photo].join('|');
@@ -140,12 +130,7 @@
     }
     return cacheCartes.get(cle);
   }
-  /* Planche A4 imprimée en recto verso automatique (retournement bord long) :
-     page 1 = recto, page 2 = verso. Les cartes sont posées en bandes de 2 en HAUT
-     de la feuille : on coupe droit sous la dernière bande et on remet le reste de
-     la feuille pour la planche suivante. Le verso est en miroir gauche-droite et
-     déborde un peu (fond perdu) pour pardonner un léger décalage.
-     Repères de coupe dans les marges du recto. */
+  /* Planche A4 en recto verso : cartes en haut de la feuille, verso inversé gauche-droite */
   const PLANCHE = { l: 88.9, h: 50.8, cols: 2, rows: 5, gout: 4, perdu: 1.5, pageL: 210, pageH: 297, haut: 10 };
   PLANCHE.max = PLANCHE.cols * PLANCHE.rows;
   PLANCHE.x0 = (PLANCHE.pageL - (PLANCHE.cols * PLANCHE.l + (PLANCHE.cols - 1) * PLANCHE.gout)) / 2;
@@ -158,7 +143,7 @@
       const x = P.x0 + col * (P.l + P.gout), y = P.y0 + r * (P.h + P.gout);
       return `<img src="${u}" style="left:${mm(x - d)};top:${mm(y - d)};width:${mm(P.l + 2 * d)};height:${mm(P.h + 2 * d)}">`;
     }).join('');
-    // Repères : traits verticaux au-dessus de la bande, horizontaux dans les marges gauche et droite.
+    // traits de coupe dans les marges
     const rangs = Math.ceil(rectos.length / P.cols), cols = Math.min(rectos.length, P.cols);
     const xs = [], ys = [];
     for (let c = 0; c < cols; c++) { const x = P.x0 + c * (P.l + P.gout); xs.push(x, x + P.l); }
@@ -191,7 +176,7 @@
     });
   }
 
-  /* ================= Données ================= */
+  /* ---------- Données ---------- */
   const db = DEMO ? magasinDemo() : magasinSupabase();
 
   function magasinDemo() {
@@ -270,7 +255,7 @@
     };
   }
 
-  /* ================= Visiteur courant ================= */
+  /* ---------- Visiteur courant ---------- */
   async function moi() {
     const id = store.get(K_MOI);
     if (!id) return null;
@@ -279,12 +264,12 @@
     return v;
   }
 
-  /* ================= Mise en page ================= */
+  /* ---------- Mise en page ---------- */
   let nettoyage = null;
   function cadre(contenu, { mat = '', equipe = false } = {}) {
     document.body.classList.toggle('equipe', equipe);
     document.body.classList.remove('avec-action');
-    app.classList.toggle('revele', !equipe);  // animations d'entrée des pages visiteur
+    app.classList.toggle('revele', !equipe);  // animations des pages visiteur
     document.title = TITRE;
     app.innerHTML = `
       <header class="bandeau"><div class="bandeau-in">
@@ -295,7 +280,7 @@
       <main class="page">${contenu}</main>`;
     window.scrollTo(0, 0);
   }
-  /* Les éléments apparaissent au fur et à mesure qu'on les fait défiler à l'écran. */
+  /* Les blocs apparaissent quand on scrolle */
   function defilement(selecteur) {
     const els = document.querySelectorAll(selecteur);
     if (!('IntersectionObserver' in window)) return;
@@ -313,12 +298,12 @@
     document.getElementById('re').onclick = route;
   }
 
-  /* ================= Écrans visiteur ================= */
+  /* ---------- Écrans visiteur ---------- */
   const ICO_SCAN = '<svg class="ico-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 12h18"/></svg>';
   const VAGUES = `<svg class="vagues" viewBox="0 0 800 18" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M0 6${' q12.5 -6 25 0 t25 0'.repeat(16)}"/><path d="M0 14${' q12.5 -6 25 0 t25 0'.repeat(16)}"/></svg>`;
   const GRAVURE = '<img class="gravure" src="img/gravure.png" alt="" width="620" height="552">';
 
-  /* Cachet de la poste : texte en couronne, mot au centre, petite ligne dessous. */
+  /* Le cachet de la poste (texte en rond et mot au milieu) */
   let nCachet = 0;
   function cachet(couronne, centre, bas = '', classe = '') {
     const id = 'cachet' + (++nCachet);
@@ -389,20 +374,20 @@
       </form>
       <p class="pied"><a href="#/retrouver">J'ai déjà un dossier</a></p>`);
 
-    // Popup d'accueil : affichée une fois par visite.
+    // popup d'accueil, une seule fois
     const bienvenue = document.getElementById('bienvenue');
     bienvenue.querySelector('.popup-fermer').onclick = () => bienvenue.close();
     bienvenue.addEventListener('close', () => {
       store.set(K_BIENVENUE, '1', sessionStorage);
-      app.classList.add('revele');  // la page, cachée derrière la popup, apparaît
+      app.classList.add('revele');  // on affiche la page derrière
     });
     if (!store.get(K_BIENVENUE, sessionStorage)) { app.classList.remove('revele'); bienvenue.showModal(); }
 
     const f = document.getElementById('f'), err = document.getElementById('err');
     const mat = document.getElementById('matricule'), apercu = document.getElementById('apercu');
     const erreur = msg => { err.textContent = msg; err.hidden = false; err.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
-    let photo = null;      // Blob JPEG recadré
-    let photoUrl = null;   // adresse une fois envoyée (réutilisée si on réessaie)
+    let photo = null;      // photo recadrée
+    let photoUrl = null;   // lien de la photo une fois envoyée
     mat.addEventListener('input', () => { mat.value = mat.value.replace(/\D/g, '').slice(0, 4); });
 
     f.querySelectorAll('[data-photo]').forEach(inp => inp.addEventListener('change', async () => {
@@ -427,7 +412,7 @@
       if (!f.consent.checked) return erreur('Coche la case pour accepter que ta photo serve à imprimer ta carte.');
       const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Envoi de ta fiche…';
       try {
-        // Vérifié avant l'envoi de la photo pour ne pas en déposer pour rien.
+        // on vérifie avant d'envoyer la photo
         if (await db.parMatricule(matricule)) throw { code: 'MATRICULE_PRIS' };
         photoUrl = photoUrl || await db.deposerPhoto(photo);
         const v = await db.creer({ prenom, nom, matricule, photo: photoUrl });
@@ -586,7 +571,7 @@
     const arreter = () => { actif = false; clearTimeout(minuteur); if (flux) flux.getTracks().forEach(t => t.stop()); };
     nettoyage = arreter;
 
-    /* Extrait l'id d'activité d'un QR (URL ".../#/activite/<id>" ou id seul). */
+    /* Récupère l'id de l'activité dans le QR */
     const lireId = texte => { const m = /#\/activite\/([^/?#\s]+)/.exec(texte); return m ? decodeURIComponent(m[1]) : texte.trim(); };
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -600,15 +585,14 @@
       msg.innerHTML = "La caméra est bloquée. Autorise l'accès à la caméra pour ce site (réglages du navigateur), ou scanne le QR code avec l'appareil photo de ton téléphone.";
       return;
     }
-    if (!actif) return arreter(); // l'utilisateur a quitté l'écran pendant l'autorisation
+    if (!actif) return arreter(); // le visiteur a quitté la page entre temps
     video.srcObject = flux;
     try { await video.play(); } catch { }
     msg.textContent = "Vise le QR code de l'activité";
 
     const detecteur = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
     const toile = document.createElement('canvas'), ctx = toile.getContext('2d', { willReadFrequently: true });
-    /* Pas de validation au vol : on attend un peu après l'ouverture, puis le même
-       QR doit rester dans le viseur un moment (QR croisé par hasard = ignoré). */
+    /* Le QR doit rester un moment dans le viseur pour être validé */
     const debut = Date.now(), ATTENTE = 1000, TENUE = 700;
     let dernierInconnu = '', vu = '', depuis = 0, dernierVu = 0;
     const viseur = document.querySelector('.viseur');
@@ -638,7 +622,7 @@
           return setTimeout(() => aller('activite/' + id), 250);
         }
       } else {
-        // une lecture ratée de temps en temps est normale : on ne relâche qu'après 0,5 s sans le QR
+        // on attend 0,5 s sans QR avant de le lâcher
         if (vu && Date.now() - dernierVu > 500) { vu = ''; viseur.classList.remove('trouve'); msg.textContent = "Vise le QR code de l'activité"; }
         if (id && texte !== dernierInconnu) { dernierInconnu = texte; msg.textContent = "Ce QR code n'est pas une activité du stand."; }
       }
@@ -683,7 +667,7 @@
     defilement('.page > .sortie, .page > .feuille, .titre-ligne, .activites .activite, .gravure.fin, .merci');
   }
 
-  /* ================= Espace équipe ================= */
+  /* ---------- Espace équipe ---------- */
   function ecranCode(onglet) {
     cadre(`
       <form class="feuille" id="f" novalidate style="max-width:420px;width:100%;margin:0 auto">
@@ -700,7 +684,7 @@
     });
   }
 
-  /* Petit « ding » quand une inscription arrive (le navigateur l'autorise après un premier clic). */
+  /* Petit son quand quelqu'un s'inscrit */
   let audio = null;
   function bip() {
     try {
@@ -714,7 +698,7 @@
         g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.15 + 0.35);
         o.connect(g).connect(audio.destination); o.start(t + i * 0.15); o.stop(t + i * 0.15 + 0.4);
       });
-    } catch { /* pas de son, tant pis */ }
+    } catch { /* pas de son */ }
   }
 
   async function ecranEquipe(onglet = 'impression') {
@@ -733,7 +717,7 @@
     if (!window.CARTE_IMAGES) await chargerScript('carte/images.js');
 
     let voirTout = false;
-    let nbVoulu = 0;             // cartes voulues sur la prochaine planche ; 0 = toutes celles en attente (jusqu'à 10)
+    let nbVoulu = 0;             // 0 = toutes les cartes en attente
     zone.innerHTML = `<div class="stack">
         <div class="stats" id="stats"></div>
         <section class="panneau planche" id="planche"></section>
@@ -747,7 +731,7 @@
     const tout = document.getElementById('tout');
     tout.onclick = () => { voirTout = !voirTout; tout.textContent = voirTout ? 'Masquer les imprimées' : 'Voir aussi les imprimées'; dessiner(); };
 
-    /* Ordre de la file : parcours terminé d'abord (la carte est attendue à la porte), puis arrivée. */
+    /* Ceux qui ont fini passent en premier */
     const file = () => donnees.filter(v => !v.imprime).sort((a, b) =>
       (!!b.niveau - !!a.niveau) || (a.niveau ? (a.termine_at || '').localeCompare(b.termine_at || '') : 0) || a.created_at.localeCompare(b.created_at));
     const prochaine = () => file().slice(0, nbVoulu || PLANCHE.max);
@@ -755,7 +739,7 @@
     function dessinerPlanche() {
       const cartes = prochaine(), n = cartes.length, attente = file().length;
       if (!attente) { panneau.innerHTML = '<h2>Planche à imprimer</h2><p class="muted small">Aucune carte en attente.</p>'; return; }
-      // Hauteur de papier utilisée : on peut réutiliser une feuille déjà coupée si elle est assez haute.
+      // hauteur de feuille nécessaire
       const bandes = Math.ceil(n / PLANCHE.cols);
       const hauteur = Math.ceil((PLANCHE.haut + bandes * (PLANCHE.h + PLANCHE.gout)) / 10);
       const enTrop = attente - n;
@@ -776,8 +760,7 @@
     panneau.addEventListener('click', async e => {
       const b = e.target.closest('[data-pl]'); if (!b || b.tagName === 'SELECT') return;
       const act = b.dataset.pl;
-      // Imprimer marque aussitôt les cartes imprimées : si l'impression rate,
-      // « remettre dans la file » sur la fiche les fait revenir.
+      // les cartes passent direct en imprimées (on peut les remettre dans la file)
       if (act === 'imprimer') {
         const cartes = prochaine(); if (!cartes.length) return;
         b.disabled = true;
@@ -811,7 +794,7 @@
         <div class="stat"><span class="label">En visite</span><b>${donnees.filter(v => !v.niveau).length}</b></div>
         <div class="stat"><span class="label">Parcours terminés</span><b>${donnees.filter(v => v.niveau).length}</b></div>`;
 
-      // Affichage : de la plus récente à la plus ancienne (la planche, elle, suit l'ordre de la file).
+      // les plus récentes en premier
       const items = donnees.filter(v => voirTout || !v.imprime).sort((a, b) => b.created_at.localeCompare(a.created_at));
       const surPlanche = new Set(prochaine().map(v => v.id));
       liste.innerHTML = items.length ? items.map(v => fiche(v, surPlanche.has(v.id))).join('') : '<p class="vide">Aucune carte en attente. Les nouvelles inscriptions apparaîtront ici.</p>';
@@ -838,7 +821,7 @@
       </article>`;
     }
 
-    /* Remplit les aperçus de cartes (dessinés une seule fois grâce au cache). */
+    /* Affiche l'aperçu de chaque carte */
     function apercus() {
       liste.querySelectorAll('[data-carte]').forEach(el => {
         const v = donnees.find(x => x.id === el.dataset.carte); if (!v) return;
@@ -862,7 +845,7 @@
     });
 
     await charger();
-    // Le temps réel peut rater un événement (connexion pas encore prête, wifi coupé) : filet de sécurité.
+    // au cas où le temps réel rate quelque chose
     const stop = db.suivre(charger), filet = setInterval(charger, 15000);
     nettoyage = () => { stop(); clearInterval(filet); };
   }
@@ -891,13 +874,10 @@
       </div>`;
   }
 
-  /* ================= Tablettes du stand ================= */
-  /* Les jeux numériques tournent sur les tablettes de l'équipe, jamais sur le téléphone
-     du visiteur. Partie finie : l'équipe montre le QR imprimé de l'activité (#/equipe/qr),
-     le visiteur le scanne avec le bouton « Scanner » de son appli pour la valider. */
+  /* ---------- Tablettes du stand ---------- */
+  /* Les jeux tournent seulement sur les tablettes du stand */
   const jeuxNumeriques = () => C.activites.filter(a => a.jeu || a.lien);
-  /* Vrai plein écran (sans barre d'adresse ni onglets). Le navigateur ne l'accepte
-     qu'au toucher : on le demande quand l'équipe choisit un jeu ou touche un bouton. */
+  /* Plein écran (le navigateur le permet seulement après un appui) */
   function pleinEcran() {
     const d = document.documentElement;
     if (document.fullscreenElement || document.webkitFullscreenElement) return;
@@ -942,7 +922,7 @@
     document.body.classList.add('equipe');
     document.title = a.nom + ' — ' + TITRE;
     let installe = true;
-    try { installe = (await fetch(a.jeu, { method: 'HEAD', cache: 'no-store' })).ok; } catch { /* file:// : on tente quand même */ }
+    try { installe = (await fetch(a.jeu, { method: 'HEAD', cache: 'no-store' })).ok; } catch { /* en local on essaie quand même */ }
     app.innerHTML = `
       <div class="tablette">
         ${installe
@@ -954,9 +934,7 @@
           <button class="btn btn-mer" id="suivant">Visiteur suivant</button>
         </div>
       </div>`;
-    /* Les boutons de l'équipe restent cachés pendant la partie (un visiteur ne peut pas
-       appuyer dessus par erreur). Ils apparaissent quand le jeu envoie parent.postMessage('fini', '*'),
-       disparaissent quand il envoie parent.postMessage('debut', '*') (nouvelle partie), ou basculent quand l'équipe garde le doigt 2 secondes dans le coin en haut à gauche. */
+    /* Les boutons de l'équipe s'affichent seulement à la fin du jeu (ou appui long dans le coin) */
     const outils = document.getElementById('outils');
     const montrer = () => { outils.hidden = false; };
     outils.addEventListener('click', pleinEcran);
@@ -971,7 +949,7 @@
       if (!f || e.source !== f.contentWindow) return;
       if (e.data === 'fini') montrer();
       if (e.data === 'debut') outils.hidden = true;   // le visiteur relance une partie
-      if (e.data === 'quitter') aller('tablette');    // bouton « Quitter » du jeu (jeux/quitter.js)
+      if (e.data === 'quitter') aller('tablette');    // bouton Quitter du jeu
     };
     window.addEventListener('message', ecoute);
     const coin = app.querySelector('.tablette-coin');
@@ -981,14 +959,14 @@
     nettoyage = () => { clearTimeout(appui); window.removeEventListener('message', ecoute); };
   }
 
-  /* ================= Routeur ================= */
+  /* ---------- Routeur ---------- */
   async function route() {
     if (nettoyage) { try { nettoyage(); } catch { } nettoyage = null; }
     const h = location.hash.replace(/^#\/?/, '');
     const [page, arg] = h.split('/');
     try {
       if (page === 'tablette') return ecranTablette(arg);
-      // Pour tester : oublie le dossier de ce téléphone (il reste dans la base, retrouvable par « J'ai déjà un dossier »).
+      // pour les tests : oublie le dossier sur ce téléphone
       if (page === 'reset') { store.set(K_MOI, null); store.set(K_ATTENTE, null, sessionStorage); return aller(''); }
       if (page !== 'equipe') chargement();
       if (page === 'activite') return await ecranActivite(arg);

@@ -1,11 +1,6 @@
-/* ==========================================================
-   L'Évasion — données annexes
-   - ATOUTS    : nom et icône de chaque atout (affichés dans le sac)
-   - GLOSSAIRE : mots difficiles, soulignés dans les textes ;
-                 un appui sur le mot affiche sa définition
-   ========================================================== */
+/* Les objets du sac et le glossaire (mots soulignés dans les textes) */
 
-/* nom : avec article, pour les phrases (« Il te fallait la corde. ») */
+/* nom avec l'article, pour les phrases */
 const ATOUTS = {
   corde:    { icone: "🪢", court: "Corde",     nom: "la corde" },
   vivres:   { icone: "🍞", court: "Pain sec",  nom: "le pain sec" },
@@ -17,8 +12,7 @@ const ATOUTS = {
   pecheur:  { icone: "🎣", court: "Pêcheur",   nom: "l'aide du pêcheur" }
 };
 
-/* formes : les façons dont le mot apparaît dans les textes
-   (la recherche ignore les majuscules) */
+/* formes = comment le mot peut être écrit dans les textes */
 const GLOSSAIRE = [
   { formes: ["bagne"], mot: "Bagne",
     def: "Prison de travaux forcés, loin de chez soi. En Nouvelle-Calédonie de 1864 à 1897." },
