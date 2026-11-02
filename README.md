@@ -53,7 +53,6 @@ Ouvrir `index.html` via un petit serveur local (par ex. l'extension *Live Server
 - Vider les données : dernière ligne de `supabase.sql` (`truncate …`).
 - Supprimer les photos : Supabase → *Storage* → `photos` → tout sélectionner → *Delete*.
 
-C'est promis aux visiteurs dans la phrase de consentement : à faire juste après l'événement.
 
 ## Sécurité, en clair
 
